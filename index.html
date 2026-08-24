@@ -313,6 +313,51 @@ legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
 .opt{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
 .opt input{width:16px;height:16px;accent-color:var(--brand)}
 
+/* הודעת טיוטה / אזהרות */
+.notice{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:#fff6da;border:1.5px solid #d9b64a;border-radius:9px;
+  padding:8px 11px;font-size:13px;font-weight:600;color:#6b4f10;
+}
+.notice .btn{padding:4px 9px;font-size:12.5px}
+
+.warnbar{
+  display:none;background:#fdecea;border-bottom:2px solid #c0392b;
+  color:#7d1f16;font-weight:700;font-size:13.5px;padding:9px 18px;text-align:center;
+}
+.warnbar.show{display:block}
+
+/* בקשת שחזור טיוטה בפתיחת התוכנה */
+.recover{
+  position:fixed;bottom:22px;inset-inline-end:22px;z-index:150;
+  background:#fff;border:1.5px solid var(--brand);border-radius:12px;
+  box-shadow:0 14px 40px rgba(50,35,10,.28);
+  padding:13px 15px;max-width:330px;display:none;
+}
+.recover.show{display:block}
+.recover h3{margin:0 0 4px;font-size:14.5px;color:var(--brand-dark)}
+.recover p{margin:0 0 10px;font-size:12.5px;color:var(--ink-soft);line-height:1.4}
+.recover .acts{display:flex;gap:7px;flex-wrap:wrap}
+
+/* היסטוריית גרסאות */
+.snaps{
+  border:1px solid var(--line);border-radius:10px;
+  max-height:210px;overflow:auto;background:#fdfbf6;
+}
+.snaps .empty{padding:12px;text-align:center;color:var(--ink-soft);font-size:13px}
+.snap{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 11px;border-bottom:1px solid var(--line);font-size:13px;
+}
+.snap:last-child{border-bottom:none}
+.snap b{font-weight:700}
+.snap .meta{color:var(--ink-soft);font-size:12px}
+.snap .btn{margin-inline-start:auto;padding:3px 9px;font-size:12px}
+
+.chip.saved i{background:#2e7d32}
+.chip.saved.err i{background:#c0392b}
+.chip.saved.err{border-color:#c0392b;color:#a5281c}
+
 .toast{
   position:fixed;bottom:22px;inset-inline-start:22px;z-index:200;
   background:#2f2a23;color:#fff;padding:11px 17px;border-radius:10px;
@@ -447,6 +492,11 @@ legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
 </head>
 <body class="pt-rh scope-all">
 
+<div class="warnbar noprint" id="warnBar">
+  ⚠ הדפדפן חוסם שמירה מקומית (מצב פרטי / הגבלת אחסון) — העבודה <b>לא תישמר</b> בסגירת החלון.
+  יש לפתוח את הקובץ בחלון רגיל, ובכל מקרה לייצא גיבוי לפני סגירה.
+</div>
+
 <!-- ======================================================================
      סרגל כלים
      ====================================================================== -->
@@ -484,6 +534,7 @@ legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
       <span class="chip paid"><i></i>שולם <b id="stPaid">0</b></span>
       <span class="chip unpaid"><i></i>לא שולם <b id="stUnpaid">0</b></span>
       <span class="chip free"><i></i>פנוי <b id="stFree">0</b></span>
+      <span class="chip saved" id="saveChip"><i></i><b id="saveState">נשמר</b></span>
     </div>
   </div>
 </header>
@@ -552,6 +603,10 @@ legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
       <p id="seatSub">—</p>
     </div>
     <form id="seatForm" class="modal-body" autocomplete="off">
+      <div class="notice" id="draftNotice" style="display:none">
+        <span id="draftNoticeText"></span>
+        <button type="button" class="btn sm" id="btnDropDraft">חזרה לגרסה השמורה</button>
+      </div>
       <div class="grid2">
         <div class="row">
           <label for="fPre">תואר לפני</label>
@@ -659,10 +714,24 @@ legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
         <label for="fileRestore">שחזור מקובץ גיבוי</label>
         <input type="file" id="fileRestore" accept="application/json,.json">
       </div>
+
+      <div class="row">
+        <label>היסטוריית גרסאות אוטומטית <span style="font-weight:500;color:var(--ink-soft)">(25 האחרונות, נשמרות בכל שינוי)</span></label>
+        <div class="snaps" id="snapList"><div class="empty">אין עדיין גרסאות שמורות</div></div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn ghost" type="button" id="btnBkCancel" style="margin-inline-start:auto">סגירה</button>
     </div>
+  </div>
+</div>
+
+<div class="recover noprint" id="recoverBox" role="alertdialog" aria-labelledby="recTitle">
+  <h3 id="recTitle">נמצאה עריכה שלא נשמרה</h3>
+  <p id="recText">—</p>
+  <div class="acts">
+    <button class="btn primary sm" type="button" id="btnRecOpen">פתח והמשך לערוך</button>
+    <button class="btn ghost sm" type="button" id="btnRecDrop">מחק את הטיוטה</button>
   </div>
 </div>
 
@@ -727,15 +796,94 @@ function fullName(id){
   return [ (r.pre||'').trim(), core, (r.post||'').trim() ].filter(Boolean).join(' ');
 }
 
-function save(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-  catch(e){ toast('שגיאה בשמירה מקומית'); }
+var HISTORY_KEY   = STORAGE_KEY + ':history';
+var DRAFT_KEY     = STORAGE_KEY + ':draft';
+var MAX_SNAPSHOTS = 25;
+
+/* בדיקה חד-פעמית שהדפדפן אכן מאפשר שמירה מקומית */
+var storageOK = (function(){
+  try{
+    localStorage.setItem(STORAGE_KEY + ':probe', '1');
+    localStorage.removeItem(STORAGE_KEY + ':probe');
+    return true;
+  }catch(e){ return false; }
+})();
+
+function two(n){ return (n < 10 ? '0' : '') + n; }
+function stamp(d){
+  d = d || new Date();
+  return two(d.getDate()) + '/' + two(d.getMonth()+1) + ' ' +
+         two(d.getHours()) + ':' + two(d.getMinutes());
+}
+
+function setSaveState(ok, txt){
+  var chip = document.getElementById('saveChip');
+  document.getElementById('saveState').textContent = txt;
+  chip.classList.toggle('err', !ok);
+}
+
+function countTaken(){
+  var n = 0;
+  for(var i=0;i<seats.length;i++) if(isTaken(seats[i].id)) n++;
+  return n;
+}
+
+/* ---- היסטוריית גרסאות אוטומטית ---- */
+function readHistory(){
+  try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+  catch(e){ return []; }
+}
+function pushSnapshot(){
+  if(!storageOK) return;
+  var json = JSON.stringify(data);
+  var h = readHistory();
+  if(h.length && h[h.length-1].d === json) return;   /* אין שינוי — אין טעם */
+  h.push({ label: stamp(), n: countTaken(), d: json });
+  while(h.length > MAX_SNAPSHOTS) h.shift();
+  try{
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+  }catch(e){
+    /* חריגה ממכסת האחסון — מקצצים את ההיסטוריה ומנסים שוב */
+    try{
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(-5)));
+    }catch(e2){
+      try{ localStorage.removeItem(HISTORY_KEY); }catch(e3){}
+    }
+  }
+}
+
+/* ---- שמירת הנתונים ---- */
+function save(opts){
+  if(!storageOK){
+    setSaveState(false, 'לא נשמר!');
+    return false;
+  }
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    setSaveState(true, 'נשמר ' + stamp());
+    if(!(opts && opts.noSnapshot)) pushSnapshot();
+    return true;
+  }catch(e){
+    setSaveState(false, 'שגיאת שמירה!');
+    alert('לא ניתן לשמור את הנתונים בדפדפן (ייתכן שנגמר מקום האחסון).\n' +
+          'מומלץ לייצא קובץ גיבוי מיד דרך כפתור "גיבוי".');
+    return false;
+  }
 }
 function load(){
   try{
     var raw = localStorage.getItem(STORAGE_KEY);
     if(raw) data = JSON.parse(raw) || {};
   }catch(e){ data = {}; }
+}
+
+/* ---- טיוטה: שמירה רציפה של החלון הפתוח ---- */
+function readDraft(){
+  try{ return JSON.parse(localStorage.getItem(DRAFT_KEY)); }
+  catch(e){ return null; }
+}
+function clearDraft(){
+  try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
 }
 
 /* =====================================================================
@@ -956,32 +1104,125 @@ function setPaidUI(on){
   paidLabel.textContent = draftPaid ? 'שולם ✓ — לחץ לביטול הסימון' : 'לא שולם — לחץ לסימון כשולם';
 }
 
+var dirty = false;          /* יש שינוי שטרם נשמר בחלון הפתוח */
+var draftTimer = null;
+var FIELDS = ['pre','first','last','post','phone','notes'];
+var FIELD_EL = {pre:'fPre', first:'fFirst', last:'fLast', post:'fPost', phone:'fPhone', notes:'fNotes'};
+
+function formValues(){
+  var v = {};
+  for(var i=0;i<FIELDS.length;i++){
+    v[FIELDS[i]] = document.getElementById(FIELD_EL[FIELDS[i]]).value.trim();
+  }
+  v.paid = draftPaid;
+  return v;
+}
+function fillForm(v){
+  for(var i=0;i<FIELDS.length;i++){
+    document.getElementById(FIELD_EL[FIELDS[i]]).value = v[FIELDS[i]] || '';
+  }
+  setPaidUI(v.paid);
+}
+function baseValues(id){
+  var r = rec(id);
+  if(!r){ var b = blank(); b.paid = false; return b; }
+  var v = {};
+  for(var i=0;i<FIELDS.length;i++) v[FIELDS[i]] = (r[FIELDS[i]] || '').trim();
+  v.paid = !!r.paid;
+  return v;
+}
+function sameValues(a, b){
+  for(var i=0;i<FIELDS.length;i++){
+    if((a[FIELDS[i]] || '') !== (b[FIELDS[i]] || '')) return false;
+  }
+  return !!a.paid === !!b.paid;
+}
+
+function markDirty(on){
+  dirty = !!on;
+  document.getElementById('btnSave').textContent = dirty ? 'שמירה •' : 'שמירה';
+}
+
+/* נקראת בכל הקלדה — שומרת את מצב החלון גם לפני לחיצה על "שמירה" */
+function saveDraft(){
+  if(!current) return;
+  var v = formValues();
+  if(sameValues(v, baseValues(current))){
+    clearDraft(); markDirty(false); return;
+  }
+  markDirty(true);
+  if(!storageOK) return;
+  try{
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ id: current, v: v, label: stamp() }));
+  }catch(e){}
+}
+/* סימון מיידי של "יש שינוי" — כתיבת הטיוטה עצמה מושהית מעט */
+function updateDirty(){
+  if(!current) return;
+  markDirty(!sameValues(formValues(), baseValues(current)));
+}
+function queueDraft(){
+  updateDirty();
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(saveDraft, 250);
+}
+
 function openSeat(id){
   current = id;
   var meta = seatIndex[id];
-  var r = rec(id) || blank();
 
   document.getElementById('seatTitle').textContent = meta.areaName + ' — ' + meta.rowLabel + ' · מקום ' + meta.num;
   document.getElementById('seatSub').textContent = meta.section + ' · מזהה: ' + meta.id;
 
-  document.getElementById('fPre').value   = r.pre   != null ? r.pre  : 'ה"ה';
-  document.getElementById('fFirst').value = r.first || '';
-  document.getElementById('fLast').value  = r.last  || '';
-  document.getElementById('fPost').value  = r.post  != null ? r.post : 'הי"ו';
-  document.getElementById('fPhone').value = r.phone || '';
-  document.getElementById('fNotes').value = r.notes || '';
-  setPaidUI(r.paid);
+  fillForm(baseValues(id));
+  markDirty(false);
 
+  /* אם נותרה טיוטה מעריכה קודמת שלא נשמרה — משחזרים אותה */
+  var notice = document.getElementById('draftNotice');
+  notice.style.display = 'none';
+  var d = readDraft();
+  if(d && d.id === id && !sameValues(d.v, baseValues(id))){
+    fillForm(d.v);
+    document.getElementById('draftNoticeText').textContent =
+      'שוחזרה עריכה שלא נשמרה מ-' + (d.label || 'קודם') + '.';
+    notice.style.display = '';
+    markDirty(true);
+  }
+
+  hideRecover();
   seatOverlay.classList.add('open');
   setTimeout(function(){ document.getElementById('fFirst').focus(); }, 40);
 }
 
 function closeSeat(){
+  clearTimeout(draftTimer);
   seatOverlay.classList.remove('open');
+  document.getElementById('draftNotice').style.display = 'none';
+  markDirty(false);
   current = null;
 }
 
-btnPaid.addEventListener('click', function(){ setPaidUI(!draftPaid); });
+/* סגירה שמבקשת אישור אם יש שינוי שלא נשמר */
+function requestCloseSeat(){
+  if(dirty){
+    if(!confirm('יש שינויים שלא נשמרו במקום זה.\nלסגור בלי לשמור? הטיוטה תימחק.')) return false;
+    clearDraft();
+  }
+  closeSeat();
+  return true;
+}
+
+document.getElementById('seatForm').addEventListener('input', queueDraft);
+document.getElementById('btnDropDraft').addEventListener('click', function(){
+  if(!current) return;
+  clearDraft();
+  fillForm(baseValues(current));
+  markDirty(false);
+  document.getElementById('draftNotice').style.display = 'none';
+  toast('הוחזרה הגרסה השמורה');
+});
+
+btnPaid.addEventListener('click', function(){ setPaidUI(!draftPaid); saveDraft(); });
 
 document.getElementById('btnSave').addEventListener('click', function(){
   if(!current) return;
@@ -1000,8 +1241,11 @@ document.getElementById('btnSave').addEventListener('click', function(){
     data[current] = r;
   }
   var id = current;
-  save(); paintSeat(id); updateStats(); closeSeat();
-  toast('נשמר: ' + seatIndex[id].rowLabel + ' · מקום ' + seatIndex[id].num);
+  clearDraft();
+  var ok = save();
+  paintSeat(id); updateStats(); closeSeat();
+  toast(ok ? ('נשמר: ' + seatIndex[id].rowLabel + ' · מקום ' + seatIndex[id].num)
+           : 'השינוי הוחל — אך לא נשמר בדפדפן!');
 });
 
 document.getElementById('btnClearSeat').addEventListener('click', function(){
@@ -1010,11 +1254,20 @@ document.getElementById('btnClearSeat').addEventListener('click', function(){
   if(!confirm('לפנות את המקום "' + meta.rowLabel + ' · מקום ' + meta.num + '"?\nכל הפרטים יימחקו.')) return;
   var id = current;
   delete data[id];
+  clearDraft();
   save(); paintSeat(id); updateStats(); closeSeat();
   toast('המקום פונה');
 });
 
-document.getElementById('btnCancel').addEventListener('click', closeSeat);
+document.getElementById('btnCancel').addEventListener('click', requestCloseSeat);
+
+/* אזהרה בסגירת החלון/הלשונית כשיש עריכה פתוחה שלא נשמרה */
+window.addEventListener('beforeunload', function(e){
+  if(!dirty) return;
+  e.preventDefault();
+  e.returnValue = '';
+  return '';
+});
 document.getElementById('seatForm').addEventListener('submit', function(e){
   e.preventDefault();
   document.getElementById('btnSave').click();
@@ -1281,8 +1534,83 @@ document.getElementById('expTitles').addEventListener('change', paintAll);
   }
 })();
 
+/* ---------- חלונית "נמצאה עריכה שלא נשמרה" ---------- */
+var recoverBox = document.getElementById('recoverBox');
+function hideRecover(){ recoverBox.classList.remove('show'); }
+function offerRecover(){
+  var d = readDraft();
+  if(!d || !seatIndex[d.id]) return;
+  if(sameValues(d.v, baseValues(d.id))){ clearDraft(); return; }
+  var meta = seatIndex[d.id];
+  var who = [d.v.first, d.v.last].filter(Boolean).join(' ') || '(ללא שם)';
+  document.getElementById('recText').textContent =
+    meta.areaName + ' · ' + meta.rowLabel + ' · מקום ' + meta.num +
+    ' — "' + who + '", מ-' + (d.label || 'הפעם הקודמת') + '.';
+  recoverBox.classList.add('show');
+}
+document.getElementById('btnRecOpen').addEventListener('click', function(){
+  var d = readDraft();
+  hideRecover();
+  if(d && seatIndex[d.id]) openSeat(d.id);
+});
+document.getElementById('btnRecDrop').addEventListener('click', function(){
+  clearDraft(); hideRecover(); toast('הטיוטה נמחקה');
+});
+
+/* ---------- היסטוריית גרסאות ---------- */
+function renderSnapshots(){
+  var host = document.getElementById('snapList');
+  var h = readHistory();
+  host.innerHTML = '';
+  if(!h.length){
+    host.innerHTML = '<div class="empty">אין עדיין גרסאות שמורות</div>';
+    return;
+  }
+  var nowJson = JSON.stringify(data);
+  var curIdx = -1;
+  for(var q = h.length - 1; q >= 0; q--){ if(h[q].d === nowJson){ curIdx = q; break; } }
+  for(var i = h.length - 1; i >= 0; i--){
+    (function(snap, idx){
+      var isNow = (idx === curIdx);
+      var row = document.createElement('div');
+      row.className = 'snap';
+
+      var main = document.createElement('div');
+      var howMany = snap.n === 0 ? 'ריק — ללא שיבוצים'
+                  : snap.n === 1 ? 'מקום אחד משובץ'
+                  : snap.n + ' מקומות משובצים';
+      main.innerHTML = '<b>' + snap.label + '</b>' +
+                       '<div class="meta">' + howMany + '</div>';
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn sm';
+      btn.textContent = isNow ? 'הגרסה הנוכחית' : 'שחזר';
+      btn.disabled = isNow;
+      if(btn.disabled){ btn.style.opacity = '.5'; btn.style.cursor = 'default'; }
+      btn.addEventListener('click', function(){
+        if(!confirm('לשחזר את הגרסה מ-' + snap.label + '?\n' +
+                    'המצב הנוכחי יישמר גם הוא בהיסטוריה וניתן יהיה לחזור אליו.')) return;
+        pushSnapshot();                       /* שומר את המצב הנוכחי לפני הדריסה */
+        try{ data = JSON.parse(snap.d) || {}; }catch(e){ alert('הגרסה פגומה'); return; }
+        clearDraft();
+        save({noSnapshot:true});
+        paintAll(); renderSnapshots();
+        toast('שוחזרה הגרסה מ-' + snap.label);
+      });
+
+      row.appendChild(main);
+      row.appendChild(btn);
+      host.appendChild(row);
+    })(h[i], i);
+  }
+}
+
 var backupOverlay = document.getElementById('backupOverlay');
-document.getElementById('btnBackup').addEventListener('click', function(){ backupOverlay.classList.add('open'); });
+document.getElementById('btnBackup').addEventListener('click', function(){
+  renderSnapshots();
+  backupOverlay.classList.add('open');
+});
 document.getElementById('btnBkCancel').addEventListener('click', function(){ backupOverlay.classList.remove('open'); });
 
 document.getElementById('btnDownloadJson').addEventListener('click', function(){
@@ -1301,7 +1629,8 @@ document.getElementById('fileRestore').addEventListener('change', function(e){
       var d = obj && obj.data ? obj.data : obj;
       if(typeof d !== 'object' || d === null) throw new Error('bad');
       if(!confirm('לשחזר את הנתונים מהקובץ? הנתונים הקיימים יוחלפו.')) return;
-      data = d; save(); paintAll();
+      pushSnapshot();
+      data = d; clearDraft(); save(); paintAll(); renderSnapshots();
       backupOverlay.classList.remove('open');
       toast('הנתונים שוחזרו');
     }catch(err){ alert('קובץ הגיבוי אינו תקין.'); }
@@ -1313,8 +1642,9 @@ document.getElementById('fileRestore').addEventListener('change', function(e){
 document.getElementById('btnClearAll').addEventListener('click', function(){
   if(!confirm('לאפס את כל השיבוצים?\nפעולה זו תמחק את כל הפרטים בכל המקומות.')) return;
   if(!confirm('אישור סופי — למחוק את כל הנתונים?')) return;
-  data = {}; save(); paintAll();
-  toast('כל הנתונים נמחקו');
+  pushSnapshot();
+  data = {}; clearDraft(); save(); paintAll();
+  toast('כל הנתונים נמחקו — ניתן לשחזר דרך "גיבוי"');
 });
 
 document.getElementById('eventSelect').addEventListener('change', function(){
@@ -1324,14 +1654,18 @@ document.getElementById('eventSelect').addEventListener('change', function(){
 /* סגירת חלונות */
 document.addEventListener('keydown', function(e){
   if(e.key === 'Escape'){
-    closeSeat(); closeExport();
+    if(seatOverlay.classList.contains('open')) requestCloseSeat();
+    closeExport();
     backupOverlay.classList.remove('open');
   }
 });
-[seatOverlay, exportOverlay, backupOverlay].forEach(function(ov){
+[exportOverlay, backupOverlay].forEach(function(ov){
   ov.addEventListener('mousedown', function(e){
     if(e.target === ov) ov.classList.remove('open');
   });
+});
+seatOverlay.addEventListener('mousedown', function(e){
+  if(e.target === seatOverlay) requestCloseSeat();
 });
 
 /* =====================================================================
@@ -1353,6 +1687,15 @@ load();
 buildHall();
 buildWomen();
 paintAll();
+
+if(!storageOK){
+  document.getElementById('warnBar').classList.add('show');
+  setSaveState(false, 'לא נשמר!');
+}else{
+  setSaveState(true, countTaken() ? 'נשמר' : 'מוכן');
+  pushSnapshot();     /* נקודת התחלה להיסטוריה */
+  offerRecover();     /* עריכה שנקטעה בפעם הקודמת */
+}
 
 })();
 </script>
