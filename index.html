@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>שיבוץ מקומות — בית מדרש תפארת יהודה</title>
+<style>
+/* ==========================================================================
+   פלטות צבעים (CSS Variables)
+   ========================================================================== */
+:root{
+  /* --- מצב עבודה רגיל (Workspace) --- */
+  --bg:            #f4efe6;
+  --bg-panel:      #ffffff;
+  --ink:           #2f2a23;
+  --ink-soft:      #6b6255;
+  --line:          #ded3c0;
+  --line-strong:   #c4b391;
+
+  --brand:         #8a6a35;
+  --brand-dark:    #6b5127;
+  --brand-soft:    #f0e6d2;
+  --gold:          #c9a227;
+
+  --seat-free-bg:     #efeae0;
+  --seat-free-line:   #cfc5b2;
+  --seat-free-ink:    #7a7161;
+
+  --seat-unpaid-bg:   #f8d7d7;
+  --seat-unpaid-line: #c0392b;
+  --seat-unpaid-ink:  #7d1f16;
+
+  --seat-paid-bg:     #d6efd8;
+  --seat-paid-line:   #2e7d32;
+  --seat-paid-ink:    #1b5220;
+
+  --furn-bg:       #fbf7ef;
+  --furn-line:     #d8c9a9;
+  --label-ink:     #8a6a35;
+
+  --shadow: 0 1px 2px rgba(60,45,20,.08), 0 6px 18px rgba(60,45,20,.06);
+  --radius: 10px;
+}
+
+/* ==========================================================================
+   בסיס
+   ========================================================================== */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Segoe UI","Noto Sans Hebrew","Arial Hebrew",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:inherit}
+
+/* ==========================================================================
+   סרגל עליון
+   ========================================================================== */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:linear-gradient(180deg,#fffdf8,#f7f1e6);
+  border-bottom:1px solid var(--line-strong);
+  box-shadow:0 2px 10px rgba(80,60,20,.06);
+}
+.topbar-in{
+  max-width:1600px;margin:0 auto;padding:10px 18px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:10px;margin-left:auto}
+.brand svg{width:30px;height:30px;color:var(--brand)}
+.brand h1{margin:0;font-size:18px;font-weight:800;letter-spacing:.2px}
+.brand small{display:block;font-size:11.5px;font-weight:500;color:var(--ink-soft)}
+
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.btn{
+  border:1px solid var(--line-strong);
+  background:#fff;color:var(--ink);
+  padding:7px 13px;border-radius:8px;font-weight:600;
+  transition:.13s;white-space:nowrap;
+}
+.btn:hover{background:var(--brand-soft);border-color:var(--brand)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--brand);border-color:var(--brand-dark);color:#fff}
+.btn.primary:hover{background:var(--brand-dark)}
+.btn.ghost{background:transparent}
+.btn.danger{border-color:#c0392b;color:#a5281c}
+.btn.danger:hover{background:#fbe9e7}
+.btn.ok{border-color:#2e7d32;color:#1b5220}
+.btn.ok:hover{background:#e8f5e9}
+.btn.sm{padding:5px 10px;font-size:13px}
+
+.field{display:flex;align-items:center;gap:6px}
+.field label{font-size:12.5px;color:var(--ink-soft);font-weight:600}
+select,.txt{
+  border:1px solid var(--line-strong);background:#fff;color:var(--ink);
+  padding:6px 10px;border-radius:8px;
+}
+.txt{min-width:180px}
+
+/* סטטיסטיקה */
+.stats{display:flex;gap:6px;flex-wrap:wrap}
+.chip{
+  display:flex;align-items:center;gap:6px;
+  background:#fff;border:1px solid var(--line);
+  border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:700;
+}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.chip.free i{background:var(--seat-free-line)}
+.chip.unpaid i{background:var(--seat-unpaid-line)}
+.chip.paid i{background:var(--seat-paid-line)}
+.chip.total i{background:var(--brand)}
+
+/* ==========================================================================
+   פריסת המבנה
+   ========================================================================== */
+.stage{max-width:1600px;margin:0 auto;padding:18px}
+.floor{
+  display:flex;align-items:stretch;gap:0;
+  background:var(--bg-panel);
+  border:1px solid var(--line-strong);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:16px;
+  overflow:auto;
+}
+
+/* --- בית המדרש --- */
+#hallSection{flex:1 1 auto;min-width:640px;display:flex;flex-direction:column;gap:12px}
+.section-title{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-weight:800;font-size:15px;color:var(--brand-dark);
+  letter-spacing:.4px;
+}
+
+/* ארון קודש */
+.aron{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  background:linear-gradient(180deg,#f6ecd6,#efe0c0);
+  border:2px solid var(--line-strong);
+  border-radius:14px 14px 6px 6px;
+  padding:10px 18px;
+  color:var(--brand-dark);font-weight:800;letter-spacing:.5px;
+}
+.aron svg{width:34px;height:34px;color:var(--brand)}
+
+.hall-floor{
+  display:flex;gap:14px;align-items:flex-start;
+  border:1px dashed var(--line);border-radius:12px;padding:12px;
+  background:repeating-linear-gradient(45deg,#fdfaf4,#fdfaf4 12px,#fbf6ec 12px,#fbf6ec 24px);
+}
+.zone{display:flex;flex-direction:column;gap:10px}
+.zone-side{flex:1 1 0;min-width:0}
+.zone-center{flex:0 0 auto;align-items:center}
+.zone-head{
+  text-align:center;font-size:11.5px;font-weight:800;
+  color:var(--label-ink);letter-spacing:.6px;
+  background:var(--brand-soft);border:1px solid var(--line);
+  border-radius:6px;padding:2px 8px;
+}
+
+/* יחידת ריהוט (שולחן / סטנדר) */
+.unit{
+  background:var(--furn-bg);
+  border:1.5px solid var(--furn-line);
+  border-radius:var(--radius);
+  padding:6px 8px 8px;
+  display:flex;flex-direction:column;gap:5px;
+  min-width:0;
+}
+.unit-label{
+  font-size:11px;font-weight:800;color:var(--label-ink);
+  text-align:center;letter-spacing:.3px;
+  border-bottom:1px dashed var(--furn-line);padding-bottom:3px;
+}
+.unit-seats{display:flex;gap:5px;justify-content:center}
+.unit-seats.grow > .seat{flex:1 1 0;min-width:0}
+
+/* מקום ישיבה */
+.seat{
+  position:relative;
+  border:1.5px solid var(--seat-free-line);
+  background:var(--seat-free-bg);
+  color:var(--seat-free-ink);
+  border-radius:8px;
+  min-height:52px;width:100%;
+  padding:14px 3px 4px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:11.5px;font-weight:700;line-height:1.15;
+  transition:.12s;overflow:hidden;
+}
+.seat:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(80,60,20,.16);border-color:var(--brand)}
+.seat .num{
+  position:absolute;top:2px;inset-inline-start:5px;
+  font-size:9.5px;font-weight:800;opacity:.65;
+}
+.seat .nm{display:block;max-width:100%;word-break:break-word;hyphens:auto}
+.seat .print-only{display:none}
+.seat.taken{background:var(--seat-unpaid-bg);border-color:var(--seat-unpaid-line);color:var(--seat-unpaid-ink)}
+.seat.taken.paid{background:var(--seat-paid-bg);border-color:var(--seat-paid-line);color:var(--seat-paid-ink)}
+.seat.hit{outline:3px solid var(--gold);outline-offset:2px;animation:pulse 1.1s ease-in-out 2}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,162,39,.55)}50%{box-shadow:0 0 0 8px rgba(201,162,39,0)}}
+
+/* בימה */
+.bimah{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,#f7edd8,#eddfbe);
+  border:2px solid var(--line-strong);border-radius:12px;
+  padding:10px 26px;margin:4px 0;
+  color:var(--brand-dark);font-weight:800;letter-spacing:.6px;font-size:12.5px;
+}
+.bimah svg{width:30px;height:30px;color:var(--brand)}
+
+/* --- מחיצה --- */
+.mechitza{
+  flex:0 0 26px;align-self:stretch;margin:0 6px;
+  display:flex;align-items:center;justify-content:center;
+  background:repeating-linear-gradient(0deg,var(--line-strong),var(--line-strong) 8px,transparent 8px,transparent 15px);
+  background-size:3px 100%;background-repeat:no-repeat;background-position:center;
+  position:relative;
+}
+.mechitza span{
+  writing-mode:vertical-rl;text-orientation:mixed;
+  background:var(--bg-panel);padding:10px 2px;
+  font-size:11px;font-weight:800;color:var(--label-ink);letter-spacing:3px;
+}
+
+/* --- עזרת נשים --- */
+#womenSection{flex:0 0 250px;display:flex;flex-direction:column;gap:12px}
+.women-floor{
+  display:flex;flex-direction:column;gap:7px;
+  border:1px dashed var(--line);border-radius:12px;padding:10px;
+  background:repeating-linear-gradient(-45deg,#fdfaf4,#fdfaf4 12px,#fbf6ec 12px,#fbf6ec 24px);
+}
+.women-floor .unit-seats.grow > .seat{min-height:46px}
+
+/* ==========================================================================
+   מקרא
+   ========================================================================== */
+.legend{
+  max-width:1600px;margin:12px auto 30px;padding:0 18px;
+  display:flex;gap:16px;flex-wrap:wrap;align-items:center;
+  font-size:12.5px;color:var(--ink-soft);
+}
+.legend b{color:var(--ink)}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:16px;height:16px;border-radius:5px;border:1.5px solid;display:inline-block}
+.lg.free i{background:var(--seat-free-bg);border-color:var(--seat-free-line)}
+.lg.unpaid i{background:var(--seat-unpaid-bg);border-color:var(--seat-unpaid-line)}
+.lg.paid i{background:var(--seat-paid-bg);border-color:var(--seat-paid-line)}
+
+/* ==========================================================================
+   חלונות קופצים (Modals)
+   ========================================================================== */
+.overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(45,35,20,.5);
+  display:none;align-items:center;justify-content:center;padding:18px;
+  backdrop-filter:blur(2px);
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--bg-panel);border:1px solid var(--line-strong);
+  border-radius:16px;box-shadow:0 20px 60px rgba(40,30,10,.35);
+  width:100%;max-width:430px;max-height:92vh;overflow:auto;
+}
+.modal.wide{max-width:540px}
+.modal-head{
+  padding:14px 18px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#fffdf8,#f7f1e6);
+  border-radius:16px 16px 0 0;
+}
+.modal-head h2{margin:0;font-size:16.5px;font-weight:800;color:var(--brand-dark)}
+.modal-head p{margin:3px 0 0;font-size:12.5px;color:var(--ink-soft)}
+.modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:11px}
+.modal-foot{
+  padding:12px 18px;border-top:1px solid var(--line);
+  display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start;
+  background:#fbf8f1;border-radius:0 0 16px 16px;
+}
+.row{display:flex;flex-direction:column;gap:4px}
+.row label{font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+.row input,.row textarea,.row select{
+  border:1px solid var(--line-strong);border-radius:8px;
+  padding:8px 10px;background:#fff;color:var(--ink);width:100%;
+}
+.row input:focus,.row textarea:focus,.row select:focus{
+  outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(138,106,53,.15);
+}
+.row textarea{resize:vertical;min-height:62px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
+.toggle{
+  display:flex;align-items:center;gap:9px;
+  border:1.5px solid var(--line-strong);border-radius:10px;
+  padding:9px 12px;background:#fff;font-weight:700;width:100%;justify-content:flex-start;
+}
+.toggle .dot{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid var(--seat-unpaid-line);background:var(--seat-unpaid-bg);flex:0 0 auto;
+}
+.toggle.on{border-color:var(--seat-paid-line);background:#f1faf1;color:var(--seat-paid-ink)}
+.toggle.on .dot{border-color:var(--seat-paid-line);background:var(--seat-paid-line)}
+
+fieldset{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0}
+legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.opt input{width:16px;height:16px;accent-color:var(--brand)}
+
+.toast{
+  position:fixed;bottom:22px;inset-inline-start:22px;z-index:200;
+  background:#2f2a23;color:#fff;padding:11px 17px;border-radius:10px;
+  font-weight:600;font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,.3);
+  opacity:0;transform:translateY(12px);pointer-events:none;transition:.22s;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ==========================================================================
+   כותרת היצוא (מוצגת בהדפסה בלבד)
+   ========================================================================== */
+.print-header{display:none}
+.print-footer{display:none}
+
+/* ==========================================================================
+   הדפסה / יצוא PDF — לרוחב
+   ========================================================================== */
+@page{ size:A4 landscape; margin:9mm; }
+
+@media print{
+  html,body{background:#fff !important}
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+
+  .topbar,.legend,.overlay,.toast,.noprint{display:none !important}
+  .stage{max-width:none;padding:0;margin:0}
+  .floor{
+    border:none;box-shadow:none;border-radius:0;padding:0;overflow:visible;
+    background:transparent;
+  }
+
+  .print-header{
+    display:block;text-align:center;margin:0 0 3.5mm;
+    padding-bottom:2mm;border-bottom:2.2px solid var(--pt-rule);
+  }
+  .print-header .ph-title{
+    font-size:17pt;font-weight:900;color:var(--pt-title);
+    letter-spacing:.4px;margin:0;
+  }
+  .print-header .ph-sub{
+    font-size:9.5pt;font-weight:700;color:var(--pt-sub);margin:1.2mm 0 0;letter-spacing:2px;
+  }
+  .print-footer{
+    display:block;text-align:center;margin-top:2.5mm;padding-top:1.5mm;
+    border-top:1px solid var(--pt-rule);
+    font-size:7.5pt;color:var(--pt-sub);
+  }
+
+  .section-title{font-size:11pt;color:var(--pt-title)}
+  .aron{background:var(--pt-furn2);border-color:var(--pt-rule);color:var(--pt-title);padding:6px 14px}
+  .aron svg{width:26px;height:26px;color:var(--pt-title)}
+  .bimah{background:var(--pt-furn2);border-color:var(--pt-rule);color:var(--pt-title);padding:6px 18px}
+  .bimah svg{width:24px;height:24px;color:var(--pt-title)}
+  .hall-floor,.women-floor{background:var(--pt-floor);border-color:var(--pt-rule)}
+  .unit{background:var(--pt-furn);border-color:var(--pt-furn-line)}
+  .unit-label{color:var(--pt-title);border-color:var(--pt-furn-line);font-size:8.5pt}
+  .zone-head{background:var(--pt-furn2);border-color:var(--pt-furn-line);color:var(--pt-title);font-size:8pt}
+  .mechitza span{background:#fff;color:var(--pt-title)}
+  .mechitza{background:repeating-linear-gradient(0deg,var(--pt-rule),var(--pt-rule) 8px,transparent 8px,transparent 15px);
+            background-size:3px 100%;background-repeat:no-repeat;background-position:center}
+
+  .seat{
+    background:var(--pt-seat);border-color:var(--pt-seat-line);color:var(--pt-ink);
+    min-height:0;font-size:8.5pt;padding:11px 2px 3px;box-shadow:none;
+  }
+  .seat .num{font-size:7pt;opacity:.8}
+  .seat .screen-only{display:none !important}
+  .seat .print-only{display:block !important}
+  .seat .tt{font-size:6.8pt;font-weight:700;opacity:.8;display:block}
+
+  /* דחיסה להתאמת עמוד יחיד לרוחב */
+  .floor{align-items:flex-start}
+  .unit{break-inside:avoid;page-break-inside:avoid;padding:4px 6px 5px;gap:3px}
+  .unit-label{padding-bottom:2px}
+  .hall-floor{gap:6px;padding:5px}
+  .hall-floor .zone{gap:4px}
+  .hall-floor .seat{min-height:28px;padding:10px 2px 3px}
+  #hallSection{gap:6px}
+  .aron{border-radius:10px 10px 4px 4px}
+
+  #womenSection{flex:0 0 31%;gap:5px}
+  .women-floor{gap:3px;padding:4px}
+  .women-floor .unit{padding:2px 4px 3px;gap:1px}
+  .women-floor .unit-label{font-size:7pt;padding-bottom:1px;border-bottom-style:solid}
+  .women-floor .seat{min-height:21px;font-size:7pt;padding:8px 2px 2px}
+  .women-floor .seat .num{font-size:6pt}
+  .women-floor .seat .tt{font-size:5.6pt}
+  .mechitza{flex:0 0 20px;margin:0 4px}
+
+  /* היקף היצוא */
+  body.scope-hall  #womenSection,
+  body.scope-hall  .mechitza{display:none !important}
+  body.scope-women #hallSection,
+  body.scope-women .mechitza{display:none !important}
+
+  /* בית מדרש בלבד — מרווח יותר */
+  body.scope-hall .hall-floor .seat{min-height:40px;font-size:9.5pt;padding:13px 3px 4px}
+  body.scope-hall .unit{padding:6px 8px 7px}
+
+  /* עזרת נשים בלבד — שומרת על המבנה לאורך, ממורכזת ורחבה */
+  body.scope-women #womenSection{flex:1 1 auto;max-width:150mm;margin:0 auto}
+  body.scope-women .women-floor{gap:4px}
+  body.scope-women .women-floor .unit{padding:3px 8px 4px;gap:2px}
+  body.scope-women .women-floor .unit-label{font-size:8.5pt}
+  body.scope-women .women-floor .seat{min-height:26px;font-size:8.5pt;padding:10px 3px 2px}
+  body.scope-women .women-floor .seat .num{font-size:6.5pt}
+  body.scope-women .women-floor .seat .tt{font-size:6.2pt}
+  /* לאורך — יש יותר מקום אנכי */
+  body.portrait.scope-women .women-floor .seat{min-height:34px;font-size:10pt}
+  body.portrait.scope-women .women-floor .unit{padding:5px 10px 6px}
+  body.portrait.scope-women #womenSection{max-width:none}
+
+  /* --- פלטה: ראש השנה (חום • שמנת • זהב) --- */
+  body.pt-rh{
+    --pt-title:#5c4318; --pt-sub:#8a6a35; --pt-rule:#a8823a;
+    --pt-floor:#fdf8ee; --pt-furn:#f6ead2; --pt-furn2:#efdcb8; --pt-furn-line:#c9a765;
+    --pt-seat:#fffaf0; --pt-seat-line:#c9a765; --pt-ink:#4a3616;
+  }
+  body.pt-rh.status-on .seat.taken{background:#fdeceb;border-color:#b5443a;color:#6d2019}
+  body.pt-rh.status-on .seat.taken.paid{background:#eaf5ea;border-color:#3f7d43;color:#1f4a23}
+
+  /* --- פלטה: יום הכיפורים (זהב מלכותי • לבן) --- */
+  body.pt-yk{
+    --pt-title:#8a6d12; --pt-sub:#a58a2e; --pt-rule:#c9a227;
+    --pt-floor:#ffffff; --pt-furn:#fdf6e0; --pt-furn2:#f7e9bf; --pt-furn-line:#d4b64a;
+    --pt-seat:#ffffff; --pt-seat-line:#d4b64a; --pt-ink:#5e4c10;
+  }
+  body.pt-yk.status-on .seat.taken{background:#fdf1f0;border-color:#b5443a;color:#6d2019}
+  body.pt-yk.status-on .seat.taken.paid{background:#f1f8f1;border-color:#3f7d43;color:#1f4a23}
+}
+</style>
+<style id="pageStyle">@page{ size:A4 landscape; margin:9mm; }</style>
+</head>
+<body class="pt-rh scope-all">
+
+<!-- ======================================================================
+     סרגל כלים
+     ====================================================================== -->
+<header class="topbar noprint">
+  <div class="topbar-in">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M32 6 L54 18 v10 c0 14-9 24-22 30C19 52 10 42 10 28V18Z"/>
+        <path d="M32 20v22M23 28h18"/>
+      </svg>
+      <div>
+        <h1>שיבוץ מקומות — בית מדרש תפארת יהודה</h1>
+        <small>ימים נוראים · ניהול מקומות ישיבה</small>
+      </div>
+    </div>
+
+    <div class="tools">
+      <div class="field">
+        <label for="eventSelect">מועד:</label>
+        <select id="eventSelect" aria-label="בחירת מועד">
+          <option value="rh">ראש השנה</option>
+          <option value="yk">יום הכיפורים</option>
+        </select>
+      </div>
+      <div class="field">
+        <input type="search" id="searchBox" class="txt" placeholder="חיפוש לפי שם / טלפון…" aria-label="חיפוש משובץ">
+      </div>
+      <button class="btn primary" id="btnExport" type="button">ייצוא ▾</button>
+      <button class="btn" id="btnBackup" type="button" title="גיבוי / שחזור נתונים">גיבוי</button>
+      <button class="btn danger sm" id="btnClearAll" type="button">איפוס הכל</button>
+    </div>
+
+    <div class="stats" id="stats" aria-live="polite">
+      <span class="chip total"><i></i>סה״כ <b id="stTotal">0</b></span>
+      <span class="chip paid"><i></i>שולם <b id="stPaid">0</b></span>
+      <span class="chip unpaid"><i></i>לא שולם <b id="stUnpaid">0</b></span>
+      <span class="chip free"><i></i>פנוי <b id="stFree">0</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ======================================================================
+     המפה
+     ====================================================================== -->
+<main class="stage">
+
+  <!-- כותרת ליצוא בלבד -->
+  <div class="print-header" id="printHeader">
+    <p class="ph-title" id="phTitle">שיבוץ מקומות ראש השנה בית מדרש תפארת יהודה</p>
+    <p class="ph-sub" id="phSub">מפת בית המדרש ועזרת הנשים</p>
+  </div>
+
+  <div class="floor" id="floor">
+
+    <!-- ================= בית המדרש ================= -->
+    <section id="hallSection" aria-label="בית המדרש">
+      <div class="section-title">בית המדרש</div>
+
+      <div class="aron" id="aronKodesh">
+        <!-- ספר תורה -->
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="6" y="12" width="7" height="40" rx="3.5"/>
+          <rect x="51" y="12" width="7" height="40" rx="3.5"/>
+          <path d="M13 17h38v30H13z"/>
+          <path d="M9.5 8v4M9.5 52v4M54.5 8v4M54.5 52v4"/>
+          <path d="M20 25h24M20 32h24M20 39h16"/>
+        </svg>
+        <span>ארון הקודש</span>
+      </div>
+
+      <div class="hall-floor" id="hallFloor"><!-- נבנה ב-JS --></div>
+    </section>
+
+    <!-- ================= מחיצה ================= -->
+    <div class="mechitza" aria-hidden="true"><span>מחיצה</span></div>
+
+    <!-- ================= עזרת נשים ================= -->
+    <section id="womenSection" aria-label="עזרת נשים">
+      <div class="section-title">עזרת נשים</div>
+      <div class="women-floor" id="womenFloor"><!-- נבנה ב-JS --></div>
+    </section>
+
+  </div>
+
+  <div class="print-footer" id="printFooter">בית מדרש תפארת יהודה · מפת שיבוץ מקומות</div>
+</main>
+
+<div class="legend noprint">
+  <b>מקרא:</b>
+  <span class="lg free"><i></i>מקום פנוי</span>
+  <span class="lg unpaid"><i></i>תפוס — טרם שולם</span>
+  <span class="lg paid"><i></i>תפוס — שולם</span>
+  <span style="margin-inline-start:auto">לחיצה על מקום פותחת את חלון העריכה · הנתונים נשמרים במחשב זה</span>
+</div>
+
+<!-- ======================================================================
+     חלון עריכת מקום
+     ====================================================================== -->
+<div class="overlay" id="seatOverlay" role="dialog" aria-modal="true" aria-labelledby="seatTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="seatTitle">עריכת מקום</h2>
+      <p id="seatSub">—</p>
+    </div>
+    <form id="seatForm" class="modal-body" autocomplete="off">
+      <div class="grid2">
+        <div class="row">
+          <label for="fPre">תואר לפני</label>
+          <input type="text" id="fPre" name="pre" value="ה&quot;ה">
+        </div>
+        <div class="row">
+          <label for="fPost">תואר אחרי</label>
+          <input type="text" id="fPost" name="post" value="הי&quot;ו">
+        </div>
+      </div>
+      <div class="row">
+        <label for="fFirst">שם פרטי</label>
+        <input type="text" id="fFirst" name="first" placeholder="לדוגמה: אברהם">
+      </div>
+      <div class="row">
+        <label for="fLast">שם משפחה</label>
+        <input type="text" id="fLast" name="last" placeholder="לדוגמה: כהן">
+      </div>
+      <div class="row">
+        <label for="fPhone">טלפון</label>
+        <input type="tel" id="fPhone" name="phone" placeholder="050-0000000" dir="ltr" style="text-align:right">
+      </div>
+      <div class="row">
+        <label for="fNotes">הערות</label>
+        <textarea id="fNotes" name="notes" placeholder="הערות פנימיות…"></textarea>
+      </div>
+      <button type="button" class="toggle" id="btnPaid" aria-pressed="false">
+        <span class="dot"></span><span id="paidLabel">לא שולם — לחץ לסימון כשולם</span>
+      </button>
+    </form>
+    <div class="modal-foot">
+      <button class="btn primary" type="button" id="btnSave">שמירה</button>
+      <button class="btn danger" type="button" id="btnClearSeat">פינוי מקום</button>
+      <button class="btn ghost" type="button" id="btnCancel" style="margin-inline-start:auto">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================
+     חלון יצוא
+     ====================================================================== -->
+<div class="overlay" id="exportOverlay" role="dialog" aria-modal="true" aria-labelledby="expTitle">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h2 id="expTitle">ייצוא נתונים</h2>
+      <p>בחר מועד, היקף ופורמט</p>
+    </div>
+    <div class="modal-body">
+      <fieldset>
+        <legend>מועד</legend>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="expEvent" value="rh" checked> ראש השנה <span style="color:var(--ink-soft);font-size:12.5px">(גווני חום · שמנת · זהב)</span></label>
+          <label class="opt"><input type="radio" name="expEvent" value="yk"> יום הכיפורים <span style="color:var(--ink-soft);font-size:12.5px">(זהב מלכותי · לבן)</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>היקף</legend>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="expScope" value="hall" checked> בית המדרש בלבד</label>
+          <label class="opt"><input type="radio" name="expScope" value="women"> עזרת נשים בלבד</label>
+          <label class="opt"><input type="radio" name="expScope" value="all"> מפה מלאה (בית מדרש + עזרת נשים)</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>כיוון עמוד (מפת PDF)</legend>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="expOrient" value="landscape" checked> לרוחב <span style="color:var(--ink-soft);font-size:12.5px">(ברירת מחדל — מפת בית המדרש)</span></label>
+          <label class="opt"><input type="radio" name="expOrient" value="portrait"> לאורך <span style="color:var(--ink-soft);font-size:12.5px">(מומלץ לעזרת נשים בלבד)</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>אפשרויות מפה</legend>
+        <div class="opts">
+          <label class="opt"><input type="checkbox" id="expStatus"> צבע לפי סטטוס תשלום (ירוק / אדום)</label>
+          <label class="opt"><input type="checkbox" id="expTitles" checked> הצג תארים (ה״ה … הי״ו) על המפה</label>
+        </div>
+      </fieldset>
+    </div>
+    <div class="modal-foot">
+      <button class="btn primary" type="button" id="btnDoPdf">ייצוא מפה (PDF / הדפסה)</button>
+      <button class="btn ok" type="button" id="btnDoXls">ייצוא טבלה (Excel)</button>
+      <button class="btn ghost" type="button" id="btnExpCancel" style="margin-inline-start:auto">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================
+     חלון גיבוי
+     ====================================================================== -->
+<div class="overlay" id="backupOverlay" role="dialog" aria-modal="true" aria-labelledby="bkTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="bkTitle">גיבוי ושחזור</h2>
+      <p>שמירת כל השיבוצים לקובץ, או טעינה מקובץ קיים</p>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0;color:var(--ink-soft);font-size:13.5px">
+        הנתונים נשמרים אוטומטית בדפדפן של מחשב זה. מומלץ לשמור קובץ גיבוי לאחר עדכונים.
+      </p>
+      <button class="btn primary" type="button" id="btnDownloadJson">הורדת קובץ גיבוי (JSON)</button>
+      <div class="row">
+        <label for="fileRestore">שחזור מקובץ גיבוי</label>
+        <input type="file" id="fileRestore" accept="application/json,.json">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" id="btnBkCancel" style="margin-inline-start:auto">סגירה</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+(function(){
+
+/* =====================================================================
+   1. הגדרות מבנה — ניתן לעדכן כאן את הצורה המדויקת של האולם
+   ===================================================================== */
+var CONFIG = {
+  hallName: 'בית מדרש תפארת יהודה',
+  hall: {
+    rows: 4,             // מספר שורות באולם
+    rightSeats: 4,       // מקומות בכל שולחן בצד ימין
+    leftSeats: 4,        // מקומות בכל שולחן בצד שמאל
+    shtenderColumns: 2,  // שני טורים של סטנדרים במרכז
+    shtenderSeats: 2,    // מקומות בכל סטנדר
+    bimahAfterRow: 2     // הבימה ממוקמת אחרי שורה זו (באמצע)
+  },
+  women: {
+    tables: 11,          // מספר שולחנות בעזרת נשים
+    seats: 3             // מקומות בכל שולחן
+  }
+};
+
+var EVENTS = {
+  rh: { key:'rh', name:'ראש השנה', cls:'pt-rh' },
+  yk: { key:'yk', name:'יום הכיפורים', cls:'pt-yk' }
+};
+
+var HEB = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','יג','יד','טו','טז','יז','יח','יט','כ','כא','כב','כג','כד','כה'];
+function heb(i){ return HEB[i] || String(i+1); }
+
+var STORAGE_KEY = 'tiferet-yehuda-seating-v1';
+
+/* =====================================================================
+   2. מודל הנתונים
+   ===================================================================== */
+var seats = [];   // רשימת כל המקומות (מטא-דאטה)
+var seatIndex = {};
+var data = {};    // id -> {pre, first, last, post, phone, notes, paid}
+
+function blank(){
+  return { pre:'ה"ה', first:'', last:'', post:'הי"ו', phone:'', notes:'', paid:false };
+}
+function rec(id){ return data[id] || null; }
+function isTaken(id){
+  var r = rec(id);
+  return !!(r && ((r.first||'').trim() || (r.last||'').trim()));
+}
+function shortName(id){
+  var r = rec(id); if(!r) return '';
+  return [ (r.first||'').trim(), (r.last||'').trim() ].filter(Boolean).join(' ');
+}
+function fullName(id){
+  var r = rec(id); if(!r) return '';
+  var core = [ (r.first||'').trim(), (r.last||'').trim() ].filter(Boolean).join(' ');
+  if(!core) return '';
+  return [ (r.pre||'').trim(), core, (r.post||'').trim() ].filter(Boolean).join(' ');
+}
+
+function save(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  catch(e){ toast('שגיאה בשמירה מקומית'); }
+}
+function load(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) data = JSON.parse(raw) || {};
+  }catch(e){ data = {}; }
+}
+
+/* =====================================================================
+   3. בניית המפה
+   ===================================================================== */
+function makeSeat(meta){
+  seats.push(meta);
+  seatIndex[meta.id] = meta;
+
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'seat';
+  b.id = 'seat-' + meta.id;
+  b.dataset.id = meta.id;
+  b.setAttribute('aria-label', meta.areaName + ' · ' + meta.rowLabel + ' · מקום ' + meta.num);
+
+  var num = document.createElement('span');
+  num.className = 'num';
+  num.textContent = meta.num;
+
+  var scr = document.createElement('span');
+  scr.className = 'nm screen-only';
+
+  var prn = document.createElement('span');
+  prn.className = 'nm print-only';
+
+  b.appendChild(num);
+  b.appendChild(scr);
+  b.appendChild(prn);
+  b.addEventListener('click', function(){ openSeat(meta.id); });
+  return b;
+}
+
+function makeUnit(label, count, mk){
+  var u = document.createElement('div');
+  u.className = 'unit';
+  var l = document.createElement('div');
+  l.className = 'unit-label';
+  l.textContent = label;
+  u.appendChild(l);
+  var s = document.createElement('div');
+  s.className = 'unit-seats grow';
+  for(var i=1;i<=count;i++) s.appendChild(mk(i));
+  u.appendChild(s);
+  return u;
+}
+
+function buildHall(){
+  var host = document.getElementById('hallFloor');
+  host.innerHTML = '';
+  var C = CONFIG.hall;
+
+  /* ---- טור ימין (מוצג ראשון ב-RTL = בצד ימין) ---- */
+  var right = document.createElement('div');
+  right.className = 'zone zone-side';
+  var rh = document.createElement('div');
+  rh.className = 'zone-head'; rh.textContent = 'שולחנות — צד ימין';
+  right.appendChild(rh);
+
+  /* ---- מרכז: סטנדרים + בימה ---- */
+  var center = document.createElement('div');
+  center.className = 'zone zone-center';
+  var ch = document.createElement('div');
+  ch.className = 'zone-head'; ch.textContent = 'סטנדרים — מרכז';
+  center.appendChild(ch);
+
+  /* ---- טור שמאל ---- */
+  var left = document.createElement('div');
+  left.className = 'zone zone-side';
+  var lh = document.createElement('div');
+  lh.className = 'zone-head'; lh.textContent = 'שולחנות — צד שמאל';
+  left.appendChild(lh);
+
+  for(var r=0; r<C.rows; r++){
+    (function(r){
+      var rowLabel = 'שורה ' + heb(r);
+
+      /* שולחן ימין */
+      right.appendChild(makeUnit(rowLabel, C.rightSeats, function(n){
+        return makeSeat({
+          id:'H-R-'+r+'-'+n, area:'hall', areaName:'בית המדרש',
+          section:'צד ימין', rowLabel:rowLabel, rowIdx:r, num:n,
+          sortKey:[0, r, 0, n]
+        });
+      }));
+
+      /* סטנדרים — טור לכל צד */
+      var srow = document.createElement('div');
+      srow.style.display = 'flex';
+      srow.style.gap = '8px';
+      for(var c=0; c<C.shtenderColumns; c++){
+        (function(c){
+          var side = (c === 0) ? 'ימין' : 'שמאל';
+          srow.appendChild(makeUnit(rowLabel + ' · ' + side, C.shtenderSeats, function(n){
+            return makeSeat({
+              id:'H-C'+c+'-'+r+'-'+n, area:'hall', areaName:'בית המדרש',
+              section:'סטנדרים ' + side, rowLabel:rowLabel, rowIdx:r, num:n,
+              sortKey:[1, r, c, n]
+            });
+          }));
+        })(c);
+      }
+      center.appendChild(srow);
+
+      /* הבימה — באמצע ממש */
+      if(r + 1 === C.bimahAfterRow){
+        var bimah = document.createElement('div');
+        bimah.className = 'bimah';
+        bimah.innerHTML =
+          '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" ' +
+          'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M32 18c-5-4-14-5-24-3v33c10-2 19-1 24 3 5-4 14-5 24-3V15c-10-2-19-1-24 3z"/>' +
+          '<path d="M32 18v33"/><path d="M12 24h12M12 31h12M40 24h12M40 31h12"/></svg>' +
+          '<span>בימה</span>';
+        center.appendChild(bimah);
+      }
+
+      /* שולחן שמאל */
+      left.appendChild(makeUnit(rowLabel, C.leftSeats, function(n){
+        return makeSeat({
+          id:'H-L-'+r+'-'+n, area:'hall', areaName:'בית המדרש',
+          section:'צד שמאל', rowLabel:rowLabel, rowIdx:r, num:n,
+          sortKey:[2, r, 0, n]
+        });
+      }));
+    })(r);
+  }
+
+  host.appendChild(right);
+  host.appendChild(center);
+  host.appendChild(left);
+}
+
+function buildWomen(){
+  var host = document.getElementById('womenFloor');
+  host.innerHTML = '';
+  var C = CONFIG.women;
+  for(var t=0; t<C.tables; t++){
+    (function(t){
+      var label = 'שולחן ' + heb(t);
+      host.appendChild(makeUnit(label, C.seats, function(n){
+        return makeSeat({
+          id:'W-'+t+'-'+n, area:'women', areaName:'עזרת נשים',
+          section:'עזרת נשים', rowLabel:label, rowIdx:t, num:n,
+          sortKey:[0, t, 0, n]
+        });
+      }));
+    })(t);
+  }
+}
+
+/* =====================================================================
+   4. רענון תצוגה
+   ===================================================================== */
+function paintSeat(id){
+  var el = document.getElementById('seat-' + id);
+  if(!el) return;
+  var r = rec(id);
+  var taken = isTaken(id);
+  el.classList.toggle('taken', taken);
+  el.classList.toggle('paid', !!(taken && r && r.paid));
+
+  var scr = el.querySelector('.screen-only');
+  var prn = el.querySelector('.print-only');
+  scr.textContent = taken ? shortName(id) : '';
+
+  prn.innerHTML = '';
+  if(taken){
+    var showTitles = document.getElementById('expTitles').checked;
+    if(showTitles && r.pre && r.pre.trim()){
+      var a = document.createElement('span'); a.className='tt'; a.textContent = r.pre.trim();
+      prn.appendChild(a);
+    }
+    var m = document.createElement('span');
+    m.textContent = shortName(id);
+    prn.appendChild(m);
+    if(showTitles && r.post && r.post.trim()){
+      var z = document.createElement('span'); z.className='tt'; z.textContent = r.post.trim();
+      prn.appendChild(z);
+    }
+  }
+  var meta = seatIndex[id];
+  el.title = meta.areaName + ' · ' + meta.rowLabel + ' · מקום ' + meta.num +
+             (taken ? ('\n' + fullName(id) + (r.phone ? ('\n' + r.phone) : '')) : '\n(פנוי)');
+}
+
+function paintAll(){
+  for(var i=0;i<seats.length;i++) paintSeat(seats[i].id);
+  updateStats();
+}
+
+function updateStats(){
+  var total = seats.length, paid = 0, unpaid = 0;
+  for(var i=0;i<seats.length;i++){
+    var id = seats[i].id;
+    if(isTaken(id)){ if(data[id].paid) paid++; else unpaid++; }
+  }
+  document.getElementById('stTotal').textContent = total;
+  document.getElementById('stPaid').textContent = paid;
+  document.getElementById('stUnpaid').textContent = unpaid;
+  document.getElementById('stFree').textContent = total - paid - unpaid;
+}
+
+/* =====================================================================
+   5. חלון עריכת מקום
+   ===================================================================== */
+var current = null;
+var draftPaid = false;
+
+var seatOverlay = document.getElementById('seatOverlay');
+var btnPaid = document.getElementById('btnPaid');
+var paidLabel = document.getElementById('paidLabel');
+
+function setPaidUI(on){
+  draftPaid = !!on;
+  btnPaid.classList.toggle('on', draftPaid);
+  btnPaid.setAttribute('aria-pressed', draftPaid ? 'true' : 'false');
+  paidLabel.textContent = draftPaid ? 'שולם ✓ — לחץ לביטול הסימון' : 'לא שולם — לחץ לסימון כשולם';
+}
+
+function openSeat(id){
+  current = id;
+  var meta = seatIndex[id];
+  var r = rec(id) || blank();
+
+  document.getElementById('seatTitle').textContent = meta.areaName + ' — ' + meta.rowLabel + ' · מקום ' + meta.num;
+  document.getElementById('seatSub').textContent = meta.section + ' · מזהה: ' + meta.id;
+
+  document.getElementById('fPre').value   = r.pre   != null ? r.pre  : 'ה"ה';
+  document.getElementById('fFirst').value = r.first || '';
+  document.getElementById('fLast').value  = r.last  || '';
+  document.getElementById('fPost').value  = r.post  != null ? r.post : 'הי"ו';
+  document.getElementById('fPhone').value = r.phone || '';
+  document.getElementById('fNotes').value = r.notes || '';
+  setPaidUI(r.paid);
+
+  seatOverlay.classList.add('open');
+  setTimeout(function(){ document.getElementById('fFirst').focus(); }, 40);
+}
+
+function closeSeat(){
+  seatOverlay.classList.remove('open');
+  current = null;
+}
+
+btnPaid.addEventListener('click', function(){ setPaidUI(!draftPaid); });
+
+document.getElementById('btnSave').addEventListener('click', function(){
+  if(!current) return;
+  var r = {
+    pre:   document.getElementById('fPre').value.trim(),
+    first: document.getElementById('fFirst').value.trim(),
+    last:  document.getElementById('fLast').value.trim(),
+    post:  document.getElementById('fPost').value.trim(),
+    phone: document.getElementById('fPhone').value.trim(),
+    notes: document.getElementById('fNotes').value.trim(),
+    paid:  draftPaid
+  };
+  if(!r.first && !r.last && !r.phone && !r.notes){
+    delete data[current];
+  }else{
+    data[current] = r;
+  }
+  var id = current;
+  save(); paintSeat(id); updateStats(); closeSeat();
+  toast('נשמר: ' + seatIndex[id].rowLabel + ' · מקום ' + seatIndex[id].num);
+});
+
+document.getElementById('btnClearSeat').addEventListener('click', function(){
+  if(!current) return;
+  var meta = seatIndex[current];
+  if(!confirm('לפנות את המקום "' + meta.rowLabel + ' · מקום ' + meta.num + '"?\nכל הפרטים יימחקו.')) return;
+  var id = current;
+  delete data[id];
+  save(); paintSeat(id); updateStats(); closeSeat();
+  toast('המקום פונה');
+});
+
+document.getElementById('btnCancel').addEventListener('click', closeSeat);
+document.getElementById('seatForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  document.getElementById('btnSave').click();
+});
+
+/* =====================================================================
+   6. חיפוש
+   ===================================================================== */
+document.getElementById('searchBox').addEventListener('input', function(){
+  var q = this.value.trim().toLowerCase();
+  var first = null;
+  for(var i=0;i<seats.length;i++){
+    var id = seats[i].id;
+    var el = document.getElementById('seat-' + id);
+    el.classList.remove('hit');
+    if(!q || !isTaken(id)) continue;
+    var r = data[id];
+    var hay = [r.pre,r.first,r.last,r.post,r.phone,r.notes].join(' ').toLowerCase();
+    if(hay.indexOf(q) !== -1){
+      el.classList.add('hit');
+      if(!first) first = el;
+    }
+  }
+  if(first) first.scrollIntoView({behavior:'smooth', block:'center'});
+});
+
+/* =====================================================================
+   7. יצוא — כותרות ומיון
+   ===================================================================== */
+function exportTitle(evKey){
+  return 'שיבוץ מקומות ' + EVENTS[evKey].name + ' ' + CONFIG.hallName;
+}
+function scopeName(scope){
+  if(scope === 'hall')  return 'בית המדרש';
+  if(scope === 'women') return 'עזרת נשים';
+  return 'בית המדרש ועזרת הנשים';
+}
+function cmp(a,b){
+  for(var i=0;i<a.sortKey.length;i++){
+    if(a.sortKey[i] !== b.sortKey[i]) return a.sortKey[i] - b.sortKey[i];
+  }
+  return 0;
+}
+function seatsOf(scope){
+  var out = seats.filter(function(s){
+    if(scope === 'all') return true;
+    return s.area === scope;
+  });
+  out.sort(function(a,b){
+    if(a.area !== b.area) return a.area === 'hall' ? -1 : 1;
+    return cmp(a,b);
+  });
+  return out;
+}
+
+/* =====================================================================
+   8. יצוא מפה (PDF / הדפסה)
+   ===================================================================== */
+/* איתור בלוק ה-@media print לצורך מדידה מוקדמת */
+function findPrintRule(){
+  for(var i=0;i<document.styleSheets.length;i++){
+    var sh = document.styleSheets[i], rules;
+    try{ rules = sh.cssRules; }catch(e){ continue; }
+    if(!rules) continue;
+    for(var j=0;j<rules.length;j++){
+      var r = rules[j];
+      if(r.type === 4 && r.conditionText && r.conditionText.indexOf('print') !== -1) return r;
+    }
+  }
+  return null;
+}
+
+/* מדידת המפה תחת כללי ההדפסה וחישוב יחס הקטנה לעמוד יחיד.
+   המדידה איטרטיבית: בכל סבב מוחל יחס מועמד ונמדד הגובה בפועל,
+   כך שגם גלישת שורות של שמות ארוכים נלקחת בחשבון.
+   כל הפעולה סינכרונית — הדפדפן אינו מצייר באמצע, ולכן אין הבהוב. */
+function fitScale(bodyClasses, orient){
+  var rule = findPrintRule();
+  var stage = document.querySelector('.stage');
+  if(!rule || !stage) return 1;
+
+  var pageW = (orient === 'portrait') ? 733 : 1047;   /* A4 פחות שוליים, ב-96dpi */
+  var pageH = (orient === 'portrait') ? 1047 : 733;
+
+  var body = document.body;
+  var prevBody  = body.className;
+  var prevWidth = document.documentElement.style.width;
+  var prevZoom  = stage.style.zoom;
+
+  body.className = bodyClasses;
+  document.documentElement.style.width = pageW + 'px';
+  rule.media.mediaText = 'screen';
+
+  /* חיפוש בינארי אחר יחס ההגדלה הגדול ביותר שעדיין נכנס לעמוד */
+  function fits(z){
+    stage.style.zoom = z;
+    var r = stage.getBoundingClientRect();
+    return r.height > 0 && r.height <= pageH && r.width <= pageW + 1;
+  }
+  var k;
+  if(fits(1)){
+    k = 1;
+  }else{
+    var lo = 0.3, hi = 1;
+    k = 0.3;
+    for(var it = 0; it < 12; it++){
+      var mid = (lo + hi) / 2;
+      if(fits(mid)){ k = mid; lo = mid; } else { hi = mid; }
+    }
+  }
+
+  rule.media.mediaText = 'print';
+  document.documentElement.style.width = prevWidth;
+  body.className = prevBody;
+  stage.style.zoom = prevZoom;
+
+  /* מרווח ביטחון — עיבוד ההדפסה בפועל שונה במעט ממדידת המסך */
+  k = Math.min(1, k) * 0.97;
+  return Math.max(0.3, Math.round(k * 1000) / 1000);
+}
+
+function doPdf(evKey, scope, withStatus, orient){
+  var body = document.body;
+  var prevClasses = body.className;
+  var stage = document.querySelector('.stage');
+
+  document.getElementById('phTitle').textContent = exportTitle(evKey);
+  document.getElementById('phSub').textContent = 'מפת ' + scopeName(scope);
+  document.getElementById('printFooter').textContent =
+    CONFIG.hallName + ' · ' + EVENTS[evKey].name + ' · ' + scopeName(scope);
+
+  var classes = EVENTS[evKey].cls + ' scope-' + scope +
+                (withStatus ? ' status-on' : '') +
+                (orient === 'portrait' ? ' portrait' : '');
+
+  var k = fitScale(classes, orient);
+
+  document.getElementById('pageStyle').textContent =
+    '@page{ size:A4 ' + orient + '; margin:9mm; } ' +
+    '@media print{ .stage{ zoom:' + k + '; } }';
+
+  body.className = classes;
+
+  closeExport();
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){
+      body.className = prevClasses;
+      stage.style.zoom = '';
+    }, 400);
+  }, 140);
+}
+
+/* =====================================================================
+   9. יצוא טבלה (Excel)
+   ===================================================================== */
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildSheet(evKey, scope){
+  var list = seatsOf(scope);
+  var title = exportTitle(evKey);
+  var sub = 'טבלת שיבוץ — ' + scopeName(scope);
+
+  var head =
+    '<tr>' +
+      '<th style="background:#efdcb8;border:1px solid #a8823a;padding:6px;font-size:14px">שורה / שולחן</th>' +
+      '<th style="background:#efdcb8;border:1px solid #a8823a;padding:6px;font-size:14px">מספר מקום</th>' +
+      '<th style="background:#efdcb8;border:1px solid #a8823a;padding:6px;font-size:14px">שם מלא כולל תארים</th>' +
+    '</tr>';
+
+  var rows = '';
+  var lastArea = null;
+  for(var i=0;i<list.length;i++){
+    var m = list[i];
+    if(scope === 'all' && m.area !== lastArea){
+      lastArea = m.area;
+      rows += '<tr><td colspan="3" style="background:#f6ead2;border:1px solid #a8823a;padding:6px;' +
+              'font-weight:bold;font-size:14px">' + esc(m.areaName) + '</td></tr>';
+    }
+    var rowCell = (m.area === 'hall')
+      ? (m.rowLabel + ' — ' + m.section)
+      : m.rowLabel;
+    var nameCell = fullName(m.id);
+    rows += '<tr>' +
+      '<td style="border:1px solid #c9a765;padding:5px">' + esc(rowCell) + '</td>' +
+      '<td style="border:1px solid #c9a765;padding:5px;text-align:center">' + esc(m.num) + '</td>' +
+      '<td style="border:1px solid #c9a765;padding:5px">' + esc(nameCell) + '</td>' +
+    '</tr>';
+  }
+
+  return '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head>' +
+    '<meta charset="UTF-8">' +
+    '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>' +
+    '<x:Name>' + esc(scopeName(scope)) + '</x:Name>' +
+    '<x:WorksheetOptions><x:DisplayRightToLeft/></x:WorksheetOptions>' +
+    '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->' +
+    '</head><body dir="rtl">' +
+    '<table dir="rtl" border="0" cellspacing="0" style="font-family:Arial;direction:rtl">' +
+    '<tr><td colspan="3" style="font-size:20px;font-weight:bold;text-align:center;padding:10px">' + esc(title) + '</td></tr>' +
+    '<tr><td colspan="3" style="font-size:14px;text-align:center;padding:4px 10px 12px">' + esc(sub) + '</td></tr>' +
+    head + rows +
+    '</table></body></html>';
+}
+
+function download(filename, content, mime){
+  var blob = new Blob(['﻿' + content], {type: mime + ';charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+}
+
+function doXls(evKey, scope){
+  var html = buildSheet(evKey, scope);
+  var name = 'שיבוץ מקומות ' + EVENTS[evKey].name + ' - ' + scopeName(scope) + '.xls';
+  download(name, html, 'application/vnd.ms-excel');
+  closeExport();
+  toast('הטבלה הורדה');
+}
+
+/* =====================================================================
+   10. חלונות יצוא / גיבוי
+   ===================================================================== */
+var exportOverlay = document.getElementById('exportOverlay');
+function openExport(){
+  var ev = document.getElementById('eventSelect').value;
+  var radios = document.getElementsByName('expEvent');
+  for(var i=0;i<radios.length;i++) radios[i].checked = (radios[i].value === ev);
+  exportOverlay.classList.add('open');
+}
+function closeExport(){ exportOverlay.classList.remove('open'); }
+
+function pick(name){
+  var els = document.getElementsByName(name);
+  for(var i=0;i<els.length;i++) if(els[i].checked) return els[i].value;
+  return null;
+}
+
+document.getElementById('btnExport').addEventListener('click', openExport);
+document.getElementById('btnExpCancel').addEventListener('click', closeExport);
+document.getElementById('btnDoPdf').addEventListener('click', function(){
+  doPdf(pick('expEvent'), pick('expScope'),
+        document.getElementById('expStatus').checked, pick('expOrient'));
+});
+document.getElementById('btnDoXls').addEventListener('click', function(){
+  doXls(pick('expEvent'), pick('expScope'));
+});
+document.getElementById('expTitles').addEventListener('change', paintAll);
+
+/* ברירת מחדל חכמה לכיוון העמוד לפי ההיקף הנבחר */
+(function(){
+  var scopes = document.getElementsByName('expScope');
+  for(var i=0;i<scopes.length;i++){
+    scopes[i].addEventListener('change', function(){
+      var want = (this.value === 'women') ? 'portrait' : 'landscape';
+      var ors = document.getElementsByName('expOrient');
+      for(var j=0;j<ors.length;j++) ors[j].checked = (ors[j].value === want);
+    });
+  }
+})();
+
+var backupOverlay = document.getElementById('backupOverlay');
+document.getElementById('btnBackup').addEventListener('click', function(){ backupOverlay.classList.add('open'); });
+document.getElementById('btnBkCancel').addEventListener('click', function(){ backupOverlay.classList.remove('open'); });
+
+document.getElementById('btnDownloadJson').addEventListener('click', function(){
+  var payload = { app:'tiferet-yehuda-seating', version:1, config:CONFIG, data:data };
+  download('גיבוי שיבוץ מקומות.json', JSON.stringify(payload, null, 2), 'application/json');
+  toast('קובץ הגיבוי הורד');
+});
+
+document.getElementById('fileRestore').addEventListener('change', function(e){
+  var f = e.target.files && e.target.files[0];
+  if(!f) return;
+  var fr = new FileReader();
+  fr.onload = function(){
+    try{
+      var obj = JSON.parse(fr.result);
+      var d = obj && obj.data ? obj.data : obj;
+      if(typeof d !== 'object' || d === null) throw new Error('bad');
+      if(!confirm('לשחזר את הנתונים מהקובץ? הנתונים הקיימים יוחלפו.')) return;
+      data = d; save(); paintAll();
+      backupOverlay.classList.remove('open');
+      toast('הנתונים שוחזרו');
+    }catch(err){ alert('קובץ הגיבוי אינו תקין.'); }
+  };
+  fr.readAsText(f, 'utf-8');
+  e.target.value = '';
+});
+
+document.getElementById('btnClearAll').addEventListener('click', function(){
+  if(!confirm('לאפס את כל השיבוצים?\nפעולה זו תמחק את כל הפרטים בכל המקומות.')) return;
+  if(!confirm('אישור סופי — למחוק את כל הנתונים?')) return;
+  data = {}; save(); paintAll();
+  toast('כל הנתונים נמחקו');
+});
+
+document.getElementById('eventSelect').addEventListener('change', function(){
+  toast('מועד נבחר: ' + EVENTS[this.value].name);
+});
+
+/* סגירת חלונות */
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    closeSeat(); closeExport();
+    backupOverlay.classList.remove('open');
+  }
+});
+[seatOverlay, exportOverlay, backupOverlay].forEach(function(ov){
+  ov.addEventListener('mousedown', function(e){
+    if(e.target === ov) ov.classList.remove('open');
+  });
+});
+
+/* =====================================================================
+   11. הודעות
+   ===================================================================== */
+var toastEl = document.getElementById('toast');
+var toastTimer = null;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+}
+
+/* =====================================================================
+   12. אתחול
+   ===================================================================== */
+load();
+buildHall();
+buildWomen();
+paintAll();
+
+})();
+</script>
+</body>
+</html>
