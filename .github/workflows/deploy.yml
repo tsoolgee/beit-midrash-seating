@@ -1,0 +1,33 @@
+name: Deploy to Cloudflare Workers
+
+# מעלה את האפליקציה ל-Cloudflare. לא נדרש להתקין או להריץ כלום במחשב.
+# הפעלה: אוטומטית בכל דחיפה ל-main, או ידנית מלשונית Actions.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'worker/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build static asset
+        run: node worker/build.mjs
+
+      - name: Deploy worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker

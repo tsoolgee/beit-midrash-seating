@@ -354,6 +354,101 @@ legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
 .snap .meta{color:var(--ink-soft);font-size:12px}
 .snap .btn{margin-inline-start:auto;padding:3px 9px;font-size:12px}
 
+/* ==========================================================================
+   מסך כניסה / הרשמה
+   ========================================================================== */
+.gate{
+  position:fixed;inset:0;z-index:300;display:none;
+  align-items:center;justify-content:center;padding:20px;overflow:auto;
+  background:linear-gradient(160deg,#3a2d16,#6b5127 55%,#8a6a35);
+}
+.gate.open{display:flex}
+.gate-card{
+  background:var(--bg-panel);border-radius:18px;width:100%;max-width:430px;
+  box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden;
+}
+.gate-head{
+  padding:20px 22px 16px;text-align:center;
+  background:linear-gradient(180deg,#fffdf8,#f4ecdc);
+  border-bottom:1px solid var(--line-strong);
+}
+.gate-head svg{width:42px;height:42px;color:var(--brand)}
+.gate-head h1{margin:6px 0 2px;font-size:19px;font-weight:800;color:var(--brand-dark)}
+.gate-head p{margin:0;font-size:12.5px;color:var(--ink-soft)}
+
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{
+  flex:1;padding:11px 8px;border:none;background:#f7f2e8;
+  font-weight:700;font-size:14px;color:var(--ink-soft);
+  border-bottom:3px solid transparent;
+}
+.tabs button.on{background:#fff;color:var(--brand-dark);border-bottom-color:var(--brand)}
+
+.gate-body{padding:16px 20px;display:flex;flex-direction:column;gap:11px}
+.gate-body[hidden]{display:none}
+.gate-foot{padding:0 20px 18px;display:flex;flex-direction:column;gap:9px}
+.gate-msg{
+  display:none;margin:0;padding:9px 11px;border-radius:9px;font-size:13px;font-weight:600;
+  background:#fdecea;border:1px solid #e2a49c;color:#7d1f16;
+}
+.gate-msg.show{display:block}
+.gate-msg.ok{background:#eaf5ea;border-color:#9ac59d;color:#1f4a23}
+.gate-or{
+  text-align:center;font-size:12px;color:var(--ink-soft);
+  border-top:1px solid var(--line);padding-top:12px;
+}
+.choice{display:flex;gap:8px}
+.choice label{
+  flex:1;display:flex;align-items:center;gap:7px;justify-content:center;
+  border:1.5px solid var(--line-strong);border-radius:9px;padding:8px 6px;
+  font-size:13px;font-weight:700;cursor:pointer;background:#fff;
+}
+.choice label.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-dark)}
+.choice input{display:none}
+
+/* ==========================================================================
+   סרגל חשבון + פאנלים
+   ========================================================================== */
+.acct{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.acct .who{font-weight:700;line-height:1.2}
+.acct .who small{display:block;font-weight:500;color:var(--ink-soft);font-size:11px}
+
+.guestbar{
+  display:none;background:#fff6da;border-bottom:1px solid #d9b64a;
+  color:#6b4f10;font-size:13px;font-weight:600;padding:8px 18px;
+  text-align:center;
+}
+.guestbar.show{display:block}
+.guestbar button{margin-inline-start:8px}
+
+table.grid{width:100%;border-collapse:collapse;font-size:13px}
+table.grid th,table.grid td{
+  border-bottom:1px solid var(--line);padding:7px 8px;text-align:right;vertical-align:middle;
+}
+table.grid th{background:#f7f2e8;font-weight:800;color:var(--brand-dark);font-size:12.5px}
+table.grid tr:last-child td{border-bottom:none}
+table.grid .acts{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+table.grid .acts .btn{padding:3px 8px;font-size:12px}
+.tag{
+  display:inline-block;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700;
+  background:var(--brand-soft);color:var(--brand-dark);border:1px solid var(--line-strong);
+}
+.tag.warn{background:#fdecea;border-color:#e2a49c;color:#7d1f16}
+.tag.ok{background:#eaf5ea;border-color:#9ac59d;color:#1f4a23}
+.scroll{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+
+.codebox{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  background:#f4fbf4;border:1.5px dashed #6aa06d;border-radius:10px;padding:10px 12px;
+}
+.codebox code{
+  font-size:19px;font-weight:800;letter-spacing:3px;color:#1f4a23;
+  font-family:Consolas,monospace;
+}
+
+body.readonly .seat:hover{transform:none;box-shadow:none;border-color:inherit}
+body.readonly .seat{cursor:default}
+
 .chip.saved i{background:#2e7d32}
 .chip.saved.err i{background:#c0392b}
 .chip.saved.err{border-color:#c0392b;color:#a5281c}
@@ -492,6 +587,84 @@ legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
 </head>
 <body class="pt-rh scope-all">
 
+<div class="gate noprint" id="authGate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gate-card">
+    <div class="gate-head">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.6"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M32 6 L54 18 v10 c0 14-9 24-22 30C19 52 10 42 10 28V18Z"/>
+        <path d="M32 20v22M23 28h18"/>
+      </svg>
+      <h1 id="gateTitle">שיבוץ מקומות לימים נוראים</h1>
+      <p>ניהול מקומות ישיבה לבית הכנסת</p>
+    </div>
+
+    <div class="tabs" id="gateTabs">
+      <button type="button" data-tab="login" class="on">כניסה</button>
+      <button type="button" data-tab="register">הרשמה</button>
+    </div>
+
+    <form class="gate-body" id="loginForm" autocomplete="on">
+      <div class="row">
+        <label for="lgEmail">כתובת מייל</label>
+        <input type="email" id="lgEmail" name="email" autocomplete="username" required dir="ltr" style="text-align:right">
+      </div>
+      <div class="row">
+        <label for="lgPass">סיסמה</label>
+        <input type="password" id="lgPass" name="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn primary" type="submit" id="btnLogin">כניסה</button>
+    </form>
+
+    <form class="gate-body" id="registerForm" autocomplete="on" hidden>
+      <div class="choice" id="regChoice">
+        <label class="on"><input type="radio" name="regKind" value="new" checked> בית כנסת חדש</label>
+        <label><input type="radio" name="regKind" value="join"> הצטרפות לקיים</label>
+      </div>
+      <div class="row" id="regShulRow">
+        <label for="rgShul">שם בית הכנסת</label>
+        <input type="text" id="rgShul" placeholder="לדוגמה: בית מדרש תפארת יהודה">
+      </div>
+      <div class="row" id="regInviteRow" hidden>
+        <label for="rgInvite">קוד הזמנה מהגבאי</label>
+        <input type="text" id="rgInvite" placeholder="8 תווים" dir="ltr" style="text-align:center;letter-spacing:3px;text-transform:uppercase">
+      </div>
+      <div class="row">
+        <label for="rgName">שם מלא</label>
+        <input type="text" id="rgName" autocomplete="name" required>
+      </div>
+      <div class="row">
+        <label for="rgEmail">כתובת מייל</label>
+        <input type="email" id="rgEmail" autocomplete="username" required dir="ltr" style="text-align:right">
+      </div>
+      <div class="grid2">
+        <div class="row">
+          <label for="rgPass">סיסמה (8 תווים ומעלה)</label>
+          <input type="password" id="rgPass" autocomplete="new-password" required>
+        </div>
+        <div class="row">
+          <label for="rgPass2">אימות סיסמה</label>
+          <input type="password" id="rgPass2" autocomplete="new-password" required>
+        </div>
+      </div>
+      <button class="btn primary" type="submit" id="btnRegister">הרשמה ופתיחת בית כנסת</button>
+    </form>
+
+    <div class="gate-foot">
+      <p class="gate-msg" id="gateMsg"></p>
+      <div class="gate-or" id="guestRow">
+        <button class="btn ghost sm" type="button" id="btnGuest">המשך כאורח — ללא חשבון</button>
+        <div style="margin-top:5px;font-size:11.5px">במצב אורח הנתונים נשמרים במחשב זה בלבד, עם ייצוא וייבוא ידניים.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="guestbar noprint" id="guestBar">
+  מצב אורח — הנתונים נשמרים בדפדפן של מחשב זה בלבד.
+  <button class="btn sm" type="button" id="btnGuestSignup">הרשמה לשמירה בענן</button>
+</div>
+
 <div class="warnbar noprint" id="warnBar">
   ⚠ הדפדפן חוסם שמירה מקומית (מצב פרטי / הגבלת אחסון) — העבודה <b>לא תישמר</b> בסגירת החלון.
   יש לפתוח את הקובץ בחלון רגיל, ובכל מקרה לייצא גיבוי לפני סגירה.
@@ -527,6 +700,14 @@ legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
       <button class="btn primary" id="btnExport" type="button">ייצוא ▾</button>
       <button class="btn" id="btnBackup" type="button" title="גיבוי / שחזור נתונים">גיבוי</button>
       <button class="btn danger sm" id="btnClearAll" type="button">איפוס הכל</button>
+      <button class="btn sm" id="btnMembers" type="button" hidden>גבאים</button>
+      <button class="btn sm" id="btnAdmin" type="button" hidden>ניהול מערכת</button>
+    </div>
+
+    <div class="acct" id="acctBox" hidden>
+      <div class="who"><span id="acctName">—</span><small id="acctShul">—</small></div>
+      <button class="btn sm" id="btnAccount" type="button">חשבון</button>
+      <button class="btn ghost sm" id="btnLogout" type="button">יציאה</button>
     </div>
 
     <div class="stats" id="stats" aria-live="polite">
@@ -716,12 +897,132 @@ legend{font-size:12.5px;font-weight:800;color:var(--brand-dark);padding:0 6px}
       </div>
 
       <div class="row">
-        <label>היסטוריית גרסאות אוטומטית <span style="font-weight:500;color:var(--ink-soft)">(25 האחרונות, נשמרות בכל שינוי)</span></label>
+        <label id="histLabel">היסטוריית גרסאות אוטומטית (25 האחרונות, נשמרות בכל שינוי)</label>
         <div class="snaps" id="snapList"><div class="empty">אין עדיין גרסאות שמורות</div></div>
       </div>
     </div>
     <div class="modal-foot">
       <button class="btn ghost" type="button" id="btnBkCancel" style="margin-inline-start:auto">סגירה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= ניהול גבאים ======================= -->
+<div class="overlay" id="membersOverlay" role="dialog" aria-modal="true" aria-labelledby="memTitle">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h2 id="memTitle">גבאי בית הכנסת</h2>
+      <p id="memSub">מי יכול להיכנס ולערוך את המפה</p>
+    </div>
+    <div class="modal-body">
+      <div id="inviteArea"></div>
+      <button class="btn primary" type="button" id="btnInvite">יצירת קוד הזמנה לגבאי חדש</button>
+      <div class="scroll">
+        <table class="grid" id="memTable">
+          <thead><tr><th>שם</th><th>מייל</th><th>תפקיד</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" id="btnMemClose" style="margin-inline-start:auto">סגירה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= ניהול מערכת ======================= -->
+<div class="overlay" id="adminOverlay" role="dialog" aria-modal="true" aria-labelledby="admTitle">
+  <div class="modal wide" style="max-width:780px">
+    <div class="modal-head">
+      <h2 id="admTitle">ניהול מערכת</h2>
+      <p>כל בתי הכנסת והמשתמשים הרשומים</p>
+    </div>
+    <div class="modal-body">
+      <div class="row">
+        <label>בתי כנסת</label>
+        <div class="scroll">
+          <table class="grid" id="shulTable">
+            <thead><tr><th>בית כנסת</th><th>משתמשים</th><th>משובצים</th><th>עודכן</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <label>משתמשים</label>
+        <div class="scroll">
+          <table class="grid" id="userTable">
+            <thead><tr><th>שם</th><th>מייל</th><th>בית כנסת</th><th>סטטוס</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" id="btnAdmClose" style="margin-inline-start:auto">סגירה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= חשבון / סיסמה ======================= -->
+<div class="overlay" id="acctOverlay" role="dialog" aria-modal="true" aria-labelledby="acTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="acTitle">החשבון שלי</h2>
+      <p id="acSub">—</p>
+    </div>
+    <form class="modal-body" id="acctForm" autocomplete="off">
+      <p class="gate-msg" id="acMsg"></p>
+      <div class="row">
+        <label for="acName">שם מלא</label>
+        <input type="text" id="acName">
+      </div>
+      <div class="row" id="acShulRow">
+        <label for="acShul">שם בית הכנסת</label>
+        <input type="text" id="acShul">
+      </div>
+      <button class="btn" type="button" id="btnSaveProfile">שמירת פרטים</button>
+
+      <fieldset>
+        <legend>החלפת סיסמה</legend>
+        <div class="opts">
+          <div class="row" id="acCurRow">
+            <label for="acCur">סיסמה נוכחית</label>
+            <input type="password" id="acCur" autocomplete="current-password">
+          </div>
+          <div class="row">
+            <label for="acNew">סיסמה חדשה (8 תווים ומעלה)</label>
+            <input type="password" id="acNew" autocomplete="new-password">
+          </div>
+          <div class="row">
+            <label for="acNew2">אימות סיסמה חדשה</label>
+            <input type="password" id="acNew2" autocomplete="new-password">
+          </div>
+          <button class="btn primary" type="button" id="btnChangePw">החלפת סיסמה</button>
+        </div>
+      </fieldset>
+    </form>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" id="btnAcClose" style="margin-inline-start:auto">סגירה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= התנגשות עריכה ======================= -->
+<div class="overlay" id="conflictOverlay" role="dialog" aria-modal="true" aria-labelledby="cfTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="cfTitle">המפה עודכנה במקום אחר</h2>
+      <p id="cfSub">—</p>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0;font-size:13.5px;color:var(--ink-soft)">
+        גבאי אחר שמר שינויים באותה מפה בזמן שערכת. בחר איזו גרסה לשמור —
+        הגרסה שתידחה תישאר זמינה בהיסטוריית הגרסאות.
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn primary" type="button" id="btnTakeServer">טען את הגרסה מהשרת</button>
+      <button class="btn danger" type="button" id="btnTakeMine">שמור את הגרסה שלי</button>
     </div>
   </div>
 </div>
@@ -797,8 +1098,17 @@ function fullName(id){
 }
 
 var HISTORY_KEY   = STORAGE_KEY + ':history';
-var DRAFT_KEY     = STORAGE_KEY + ':draft';
+var CACHE_KEY     = STORAGE_KEY + ':cloudcache';
 var MAX_SNAPSHOTS = 25;
+
+/* מצב הפעלה: 'cloud' — מחובר לחשבון והנתונים בשרת; 'guest' — מקומי בלבד */
+var MODE = 'guest';
+var ME = null;
+var apiAvailable = true;
+var serverRev = 0;
+var localDirty = false;
+
+function draftKey(){ return STORAGE_KEY + ':draft:' + (MODE === 'cloud' && ME ? ME.shulId : 'guest'); }
 
 /* בדיקה חד-פעמית שהדפדפן אכן מאפשר שמירה מקומית */
 var storageOK = (function(){
@@ -834,6 +1144,7 @@ function readHistory(){
   catch(e){ return []; }
 }
 function pushSnapshot(){
+  if(MODE === 'cloud') return;     /* בענן ההיסטוריה נשמרת בשרת */
   if(!storageOK) return;
   var json = JSON.stringify(data);
   var h = readHistory();
@@ -854,6 +1165,12 @@ function pushSnapshot(){
 
 /* ---- שמירת הנתונים ---- */
 function save(opts){
+  if(MODE === 'cloud'){
+    cacheLocal();
+    localDirty = true;
+    if(!(opts && opts.noSync)) queueSync();
+    return true;
+  }
   if(!storageOK){
     setSaveState(false, 'לא נשמר!');
     return false;
@@ -879,11 +1196,11 @@ function load(){
 
 /* ---- טיוטה: שמירה רציפה של החלון הפתוח ---- */
 function readDraft(){
-  try{ return JSON.parse(localStorage.getItem(DRAFT_KEY)); }
+  try{ return JSON.parse(localStorage.getItem(draftKey())); }
   catch(e){ return null; }
 }
 function clearDraft(){
-  try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+  try{ localStorage.removeItem(draftKey()); }catch(e){}
 }
 
 /* =====================================================================
@@ -1153,7 +1470,7 @@ function saveDraft(){
   markDirty(true);
   if(!storageOK) return;
   try{
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ id: current, v: v, label: stamp() }));
+    localStorage.setItem(draftKey(), JSON.stringify({ id: current, v: v, label: stamp() }));
   }catch(e){}
 }
 /* סימון מיידי של "יש שינוי" — כתיבת הטיוטה עצמה מושהית מעט */
@@ -1189,9 +1506,18 @@ function openSeat(id){
     markDirty(true);
   }
 
+  /* צפייה בלבד — טופס נעול */
+  var ro = !!(ME && !ME.canEdit);
+  var inputs = document.querySelectorAll('#seatForm input, #seatForm textarea');
+  for(var q=0;q<inputs.length;q++) inputs[q].disabled = ro;
+  btnPaid.disabled = ro;
+  document.getElementById('btnSave').hidden = ro;
+  document.getElementById('btnClearSeat').hidden = ro;
+  document.getElementById('btnCancel').textContent = ro ? 'סגירה' : 'ביטול';
+
   hideRecover();
   seatOverlay.classList.add('open');
-  setTimeout(function(){ document.getElementById('fFirst').focus(); }, 40);
+  if(!ro) setTimeout(function(){ document.getElementById('fFirst').focus(); }, 40);
 }
 
 function closeSeat(){
@@ -1559,6 +1885,56 @@ document.getElementById('btnRecDrop').addEventListener('click', function(){
 
 /* ---------- היסטוריית גרסאות ---------- */
 function renderSnapshots(){
+  if(MODE === 'cloud') return renderCloudSnapshots();
+  return renderLocalSnapshots();
+}
+
+/* היסטוריית הגרסאות שנשמרת בשרת */
+async function renderCloudSnapshots(){
+  var host = document.getElementById('snapList');
+  host.innerHTML = '<div class="empty">טוען…</div>';
+  var r = await apiJson('GET', '/api/history');
+  host.innerHTML = '';
+  var items = (r.body && r.body.items) || [];
+  if(!items.length){
+    host.innerHTML = '<div class="empty">אין עדיין גרסאות שמורות</div>';
+    return;
+  }
+  items.forEach(function(it){
+    var row = document.createElement('div');
+    row.className = 'snap';
+    var howMany = it.taken === 0 ? 'ריק — ללא שיבוצים'
+                : it.taken === 1 ? 'מקום אחד משובץ'
+                : it.taken + ' מקומות משובצים';
+    var main = document.createElement('div');
+    main.innerHTML = '<b>' + escapeHtml(stamp(new Date(it.updated_at))) + '</b>' +
+      '<div class="meta">' + howMany +
+      (it.updated_by ? ' · ' + escapeHtml(it.updated_by) : '') + '</div>';
+
+    var isNow = (it.rev === serverRev);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn sm';
+    btn.textContent = isNow ? 'הגרסה הנוכחית' : 'שחזר';
+    btn.disabled = isNow || !!(ME && !ME.canEdit);
+    if(btn.disabled){ btn.style.opacity = '.5'; btn.style.cursor = 'default'; }
+    btn.addEventListener('click', async function(){
+      if(!confirm('לשחזר את הגרסה מ-' + stamp(new Date(it.updated_at)) + '?\n' +
+                  'המצב הנוכחי יישמר גם הוא בהיסטוריה וניתן יהיה לחזור אליו.')) return;
+      var res = await apiJson('POST', '/api/history/restore', { id: it.id });
+      if(!res.ok){ alert(res.body.error || 'השחזור נכשל'); return; }
+      applyServer(res.body.data, res.body.rev, res.body.updatedBy, res.body.updatedAt);
+      renderSnapshots();
+      toast('הגרסה שוחזרה');
+    });
+
+    row.appendChild(main);
+    row.appendChild(btn);
+    host.appendChild(row);
+  });
+}
+
+function renderLocalSnapshots(){
   var host = document.getElementById('snapList');
   var h = readHistory();
   host.innerHTML = '';
@@ -1608,6 +1984,12 @@ function renderSnapshots(){
 
 var backupOverlay = document.getElementById('backupOverlay');
 document.getElementById('btnBackup').addEventListener('click', function(){
+  var lbl = document.getElementById('histLabel');
+  if(lbl){
+    lbl.textContent = (MODE === 'cloud')
+      ? 'היסטוריית גרסאות בשרת (30 האחרונות, נשמרות בכל שינוי)'
+      : 'היסטוריית גרסאות אוטומטית (25 האחרונות, נשמרות בכל שינוי)';
+  }
   renderSnapshots();
   backupOverlay.classList.add('open');
 });
@@ -1681,21 +2063,597 @@ function toast(msg){
 }
 
 /* =====================================================================
-   12. אתחול
+   12. חיבור לשרת (Cloudflare Worker) — חשבונות וסנכרון
    ===================================================================== */
-load();
+
+function apiFetch(method, path, body){
+  var opts = {
+    method: method,
+    credentials: 'same-origin',
+    headers: { 'accept': 'application/json' }
+  };
+  if(body !== undefined){
+    opts.headers['content-type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  return fetch(path, opts);
+}
+async function apiJson(method, path, body){
+  var res = await apiFetch(method, path, body);
+  var out = null;
+  try{ out = await res.json(); }catch(e){}
+  return { ok: res.ok, status: res.status, body: out || {} };
+}
+
+/* ---------- מטמון מקומי של נתוני הענן (הרשת עלולה ליפול) ---------- */
+function cacheLocal(){
+  if(!storageOK || !ME) return;
+  try{
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ shulId: ME.shulId, rev: serverRev, data: data }));
+  }catch(e){}
+}
+function readCache(){
+  try{
+    var c = JSON.parse(localStorage.getItem(CACHE_KEY));
+    return (c && ME && c.shulId === ME.shulId) ? c : null;
+  }catch(e){ return null; }
+}
+
+/* ---------- סנכרון ---------- */
+var syncTimer = null, syncing = false, syncAgain = false, retryTimer = null;
+
+function queueSync(){
+  setSaveState(true, 'ממתין לשמירה…');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncNow, 700);
+}
+
+async function syncNow(){
+  if(MODE !== 'cloud') return;
+  if(syncing){ syncAgain = true; return; }
+  syncing = true;
+  clearTimeout(retryTimer);
+  setSaveState(true, 'שומר…');
+  try{
+    var r = await apiJson('PUT', '/api/chart', { data: data, rev: serverRev });
+    if(r.status === 409){
+      syncing = false;
+      showConflict(r.body.server || {});
+      return;
+    }
+    if(r.status === 401){
+      syncing = false;
+      setSaveState(false, 'ההתחברות פגה');
+      alert('ההתחברות פגה. יש להיכנס מחדש.\nהשינויים שערכת שמורים במחשב ויעלו לאחר הכניסה.');
+      showGate('login');
+      return;
+    }
+    if(!r.ok){
+      setSaveState(false, r.body.error || 'השמירה נכשלה');
+    }else{
+      serverRev = r.body.rev;
+      localDirty = false;
+      cacheLocal();
+      setSaveState(true, 'נשמר בענן ' + stamp());
+    }
+  }catch(e){
+    setSaveState(false, 'אין חיבור — נשמר במחשב');
+    retryTimer = setTimeout(syncNow, 15000);
+  }
+  syncing = false;
+  if(syncAgain){ syncAgain = false; queueSync(); }
+}
+
+/* ---------- קליטת גרסה מהשרת ---------- */
+function applyServer(obj, rev, by, at){
+  data = obj || {};
+  serverRev = rev || 0;
+  localDirty = false;
+  cacheLocal();
+  paintAll();
+  setSaveState(true, 'נשמר בענן' + (at ? ' ' + stamp(new Date(at)) : ''));
+}
+
+async function loadCloudChart(){
+  try{
+    var r = await apiJson('GET', '/api/chart');
+    if(r.ok){
+      applyServer(r.body.data, r.body.rev, r.body.updatedBy, r.body.updatedAt);
+      return true;
+    }
+  }catch(e){}
+  var c = readCache();
+  if(c){
+    data = c.data || {}; serverRev = c.rev || 0; paintAll();
+    setSaveState(false, 'לא מסונכרן — עותק מקומי');
+  }
+  return false;
+}
+
+/* ---------- בדיקת עדכונים מגבאי אחר ---------- */
+var pollTimer = null;
+function startPolling(){
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async function(){
+    if(MODE !== 'cloud' || document.hidden || syncing || localDirty) return;
+    if(seatOverlay.classList.contains('open')) return;
+    try{
+      var r = await apiJson('GET', '/api/chart/rev');
+      if(r.ok && r.body.rev !== serverRev){
+        var full = await apiJson('GET', '/api/chart');
+        if(full.ok){
+          applyServer(full.body.data, full.body.rev, full.body.updatedBy, full.body.updatedAt);
+          toast('המפה עודכנה' + (full.body.updatedBy ? ' על ידי ' + full.body.updatedBy : ''));
+        }
+      }
+    }catch(e){}
+  }, 20000);
+}
+
+/* ---------- התנגשות עריכה ---------- */
+var conflictOverlay = document.getElementById('conflictOverlay');
+var conflictServer = null;
+function showConflict(server){
+  conflictServer = server;
+  document.getElementById('cfSub').textContent =
+    (server.updatedBy ? server.updatedBy + ' · ' : '') +
+    (server.updatedAt ? stamp(new Date(server.updatedAt)) : '');
+  conflictOverlay.classList.add('open');
+}
+document.getElementById('btnTakeServer').addEventListener('click', function(){
+  conflictOverlay.classList.remove('open');
+  if(conflictServer){
+    applyServer(conflictServer.data, conflictServer.rev, conflictServer.updatedBy, conflictServer.updatedAt);
+  }
+  toast('נטענה הגרסה מהשרת');
+});
+document.getElementById('btnTakeMine').addEventListener('click', async function(){
+  conflictOverlay.classList.remove('open');
+  setSaveState(true, 'שומר…');
+  var r = await apiJson('PUT', '/api/chart', { data: data, force: true });
+  if(r.ok){
+    serverRev = r.body.rev; localDirty = false; cacheLocal();
+    setSaveState(true, 'נשמר בענן ' + stamp());
+    toast('הגרסה שלך נשמרה');
+  }else{
+    setSaveState(false, r.body.error || 'השמירה נכשלה');
+  }
+});
+
+/* =====================================================================
+   13. מסך כניסה והרשמה
+   ===================================================================== */
+var authGate = document.getElementById('authGate');
+var gateMsg  = document.getElementById('gateMsg');
+
+function setGateMsg(text, ok){
+  gateMsg.textContent = text || '';
+  gateMsg.classList.toggle('show', !!text);
+  gateMsg.classList.toggle('ok', !!ok);
+}
+function showGate(tab){
+  authGate.classList.add('open');
+  selectTab(tab || 'login');
+  setGateMsg('');
+}
+function hideGate(){ authGate.classList.remove('open'); }
+
+function selectTab(name){
+  var btns = document.querySelectorAll('#gateTabs button');
+  for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].dataset.tab === name);
+  document.getElementById('loginForm').hidden    = (name !== 'login');
+  document.getElementById('registerForm').hidden = (name !== 'register');
+}
+document.getElementById('gateTabs').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-tab]');
+  if(b){ selectTab(b.dataset.tab); setGateMsg(''); }
+});
+
+document.getElementById('regChoice').addEventListener('change', function(){
+  var kind = document.querySelector('input[name="regKind"]:checked').value;
+  var labels = document.querySelectorAll('#regChoice label');
+  for(var i=0;i<labels.length;i++){
+    labels[i].classList.toggle('on', labels[i].querySelector('input').checked);
+  }
+  document.getElementById('regShulRow').hidden   = (kind !== 'new');
+  document.getElementById('regInviteRow').hidden = (kind !== 'join');
+  document.getElementById('btnRegister').textContent =
+    (kind === 'new') ? 'הרשמה ופתיחת בית כנסת' : 'הרשמה והצטרפות';
+});
+
+document.getElementById('loginForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  var btn = document.getElementById('btnLogin');
+  btn.disabled = true; setGateMsg('');
+  var r;
+  try{
+    r = await apiJson('POST', '/api/login', {
+      email: document.getElementById('lgEmail').value,
+      password: document.getElementById('lgPass').value
+    });
+  }catch(err){ r = { ok:false, body:{ error:'אין חיבור לשרת' } }; }
+  btn.disabled = false;
+  if(!r.ok){ setGateMsg(r.body.error || 'הכניסה נכשלה'); return; }
+  document.getElementById('lgPass').value = '';
+  await enterCloud(r.body.user);
+});
+
+document.getElementById('registerForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  var kind = document.querySelector('input[name="regKind"]:checked').value;
+  var pw  = document.getElementById('rgPass').value;
+  var pw2 = document.getElementById('rgPass2').value;
+  if(pw !== pw2){ setGateMsg('הסיסמאות אינן תואמות'); return; }
+  if(pw.length < 8){ setGateMsg('הסיסמה חייבת להכיל לפחות 8 תווים'); return; }
+
+  var payload = {
+    email: document.getElementById('rgEmail').value,
+    password: pw,
+    name: document.getElementById('rgName').value
+  };
+  if(kind === 'new') payload.shulName = document.getElementById('rgShul').value;
+  else payload.invite = document.getElementById('rgInvite').value;
+
+  var btn = document.getElementById('btnRegister');
+  btn.disabled = true; setGateMsg('');
+  var r;
+  try{ r = await apiJson('POST', '/api/register', payload); }
+  catch(err){ r = { ok:false, body:{ error:'אין חיבור לשרת' } }; }
+  btn.disabled = false;
+  if(!r.ok){ setGateMsg(r.body.error || 'ההרשמה נכשלה'); return; }
+
+  document.getElementById('rgPass').value = '';
+  document.getElementById('rgPass2').value = '';
+
+  var guest = {};
+  try{ guest = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }catch(err2){}
+  var guestCount = 0;
+  for(var k in guest){ if(guest[k] && (guest[k].first || guest[k].last)) guestCount++; }
+
+  await enterCloud(r.body.user);
+
+  if(guestCount && kind === 'new'){
+    if(confirm('נמצאו ' + guestCount + ' מקומות משובצים ממצב אורח.\nלהעלות אותם לחשבון החדש?')){
+      data = guest;
+      paintAll();
+      localDirty = true;
+      await syncNow();
+      toast('הנתונים הועלו לחשבון');
+    }
+  }
+});
+
+document.getElementById('btnGuest').addEventListener('click', function(){ enterGuest(); });
+document.getElementById('btnGuestSignup').addEventListener('click', function(){ showGate('register'); });
+
+/* =====================================================================
+   14. מעבר בין מצבים
+   ===================================================================== */
+function applyRole(){
+  var owner = ME && (ME.role === 'owner' || ME.isSuper);
+  document.getElementById('btnMembers').hidden = !owner;
+  document.getElementById('btnAdmin').hidden   = !(ME && ME.isSuper);
+  document.getElementById('acctBox').hidden    = !ME;
+  document.getElementById('guestBar').classList.toggle('show', MODE === 'guest' && apiAvailable);
+  if(ME){
+    document.getElementById('acctName').textContent = ME.name || ME.email;
+    document.getElementById('acctShul').textContent = ME.shulName + (ME.isSuper ? ' · מנהל מערכת' : '');
+  }
+  var readOnly = !!(ME && !ME.canEdit);
+  document.getElementById('btnClearAll').hidden = readOnly;
+  document.body.classList.toggle('readonly', readOnly);
+}
+
+async function enterCloud(user){
+  ME = user;
+  MODE = 'cloud';
+  hideGate();
+  applyRole();
+  await loadCloudChart();
+  startPolling();
+  offerRecover();
+  if(user.mustChange){
+    openAccount(true);
+    toast('נדרש להחליף את הסיסמה שנקבעה עבורך');
+  }
+}
+
+function enterGuest(noApi){
+  MODE = 'guest';
+  ME = null;
+  if(noApi) apiAvailable = false;
+  hideGate();
+  applyRole();
+  load();
+  paintAll();
+  if(!storageOK){
+    document.getElementById('warnBar').classList.add('show');
+    setSaveState(false, 'לא נשמר!');
+  }else{
+    setSaveState(true, countTaken() ? 'נשמר' : 'מוכן');
+    pushSnapshot();
+    offerRecover();
+  }
+}
+
+document.getElementById('btnLogout').addEventListener('click', async function(){
+  if(localDirty && !confirm('יש שינויים שטרם עלו לשרת. לצאת בכל זאת?')) return;
+  try{ await apiFetch('POST', '/api/logout'); }catch(e){}
+  clearInterval(pollTimer);
+  ME = null; MODE = 'guest'; data = {}; serverRev = 0; localDirty = false;
+  paintAll(); applyRole();
+  showGate('login');
+});
+
+/* =====================================================================
+   15. החשבון שלי
+   ===================================================================== */
+var acctOverlay = document.getElementById('acctOverlay');
+function setAcMsg(t, ok){
+  var el = document.getElementById('acMsg');
+  el.textContent = t || '';
+  el.classList.toggle('show', !!t);
+  el.classList.toggle('ok', !!ok);
+}
+function openAccount(forced){
+  if(!ME) return;
+  document.getElementById('acSub').textContent = ME.email + ' · ' + ME.shulName;
+  document.getElementById('acName').value = ME.name || '';
+  document.getElementById('acShul').value = ME.shulName || '';
+  document.getElementById('acShulRow').hidden = (ME.role !== 'owner');
+  document.getElementById('acCurRow').hidden = !!ME.mustChange;
+  setAcMsg(forced ? 'הסיסמה שלך נקבעה על ידי המנהל — יש לבחור סיסמה חדשה.' : '');
+  acctOverlay.classList.add('open');
+}
+document.getElementById('btnAccount').addEventListener('click', function(){ openAccount(false); });
+document.getElementById('btnAcClose').addEventListener('click', function(){
+  if(ME && ME.mustChange){ alert('יש להחליף את הסיסמה לפני המשך העבודה.'); return; }
+  acctOverlay.classList.remove('open');
+});
+
+document.getElementById('btnSaveProfile').addEventListener('click', async function(){
+  var r = await apiJson('POST', '/api/profile', {
+    name: document.getElementById('acName').value,
+    shulName: document.getElementById('acShul').value
+  });
+  if(!r.ok){ setAcMsg(r.body.error || 'השמירה נכשלה'); return; }
+  ME.name = document.getElementById('acName').value.trim();
+  if(ME.role === 'owner') ME.shulName = document.getElementById('acShul').value.trim();
+  applyRole();
+  setAcMsg('הפרטים נשמרו', true);
+});
+
+document.getElementById('btnChangePw').addEventListener('click', async function(){
+  var next = document.getElementById('acNew').value;
+  if(next !== document.getElementById('acNew2').value){ setAcMsg('הסיסמאות אינן תואמות'); return; }
+  if(next.length < 8){ setAcMsg('הסיסמה חייבת להכיל לפחות 8 תווים'); return; }
+  var r = await apiJson('POST', '/api/password', {
+    current: document.getElementById('acCur').value, next: next
+  });
+  if(!r.ok){ setAcMsg(r.body.error || 'החלפת הסיסמה נכשלה'); return; }
+  document.getElementById('acCur').value = '';
+  document.getElementById('acNew').value = '';
+  document.getElementById('acNew2').value = '';
+  ME.mustChange = false;
+  document.getElementById('acCurRow').hidden = false;
+  setAcMsg('הסיסמה הוחלפה. שאר המכשירים נותקו.', true);
+});
+
+/* =====================================================================
+   16. ניהול גבאים
+   ===================================================================== */
+var membersOverlay = document.getElementById('membersOverlay');
+
+function randomPassword(){
+  var abc = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var out = '', b = crypto.getRandomValues(new Uint8Array(12));
+  for(var i=0;i<b.length;i++) out += abc[b[i] % abc.length];
+  return out;
+}
+function actBtn(text, cls, fn){
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = cls; b.textContent = text;
+  b.addEventListener('click', fn);
+  return b;
+}
+function escapeHtml(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function resetMemberPassword(m){
+  var suggested = randomPassword();
+  var pw = prompt('סיסמה חדשה עבור ' + (m.name || m.email) + '\n' +
+                  'המשתמש יתבקש להחליף אותה בכניסה הבאה.\n' +
+                  'אפשר להשתמש בהצעה שלהלן או להקליד אחרת:', suggested);
+  if(pw === null) return;
+  pw = pw.trim();
+  if(pw.length < 8){ alert('הסיסמה חייבת להכיל לפחות 8 תווים'); return; }
+  var r = await apiJson('POST', '/api/members/' + m.id, { action:'password', password: pw });
+  if(!r.ok){ alert(r.body.error || 'הפעולה נכשלה'); return; }
+  alert('הסיסמה עודכנה.\nיש למסור למשתמש: ' + pw);
+  renderMembers();
+}
+
+async function renderMembers(){
+  var r = await apiJson('GET', '/api/members');
+  var tb = document.querySelector('#memTable tbody');
+  tb.innerHTML = '';
+  if(!r.ok) return;
+  document.getElementById('memSub').textContent = ME.shulName;
+
+  (r.body.members || []).forEach(function(m){
+    var tr = document.createElement('tr');
+    var role = m.role === 'owner' ? '<span class="tag">בעלים</span>'
+             : (m.can_edit ? '<span class="tag ok">גבאי — עריכה</span>' : '<span class="tag">צפייה בלבד</span>');
+    if(m.status === 'blocked') role += ' <span class="tag warn">חסום</span>';
+    tr.innerHTML =
+      '<td>' + escapeHtml(m.name || '—') + '</td>' +
+      '<td dir="ltr" style="text-align:right">' + escapeHtml(m.email) + '</td>' +
+      '<td>' + role + '</td>';
+
+    var td = document.createElement('td');
+    td.className = 'acts';
+    if(m.id !== r.body.me && m.role !== 'owner'){
+      td.appendChild(actBtn('סיסמה חדשה', 'btn sm', function(){ resetMemberPassword(m); }));
+      td.appendChild(actBtn(m.can_edit ? 'צפייה בלבד' : 'אפשר עריכה', 'btn sm', async function(){
+        await apiJson('POST', '/api/members/' + m.id, { action:'canEdit', value: !m.can_edit });
+        renderMembers();
+      }));
+      td.appendChild(actBtn(m.status === 'blocked' ? 'שחרור' : 'חסימה', 'btn sm', async function(){
+        await apiJson('POST', '/api/members/' + m.id,
+          { action:'status', value: m.status === 'blocked' ? 'active' : 'blocked' });
+        renderMembers();
+      }));
+      td.appendChild(actBtn('הסרה', 'btn sm danger', async function(){
+        if(!confirm('להסיר את ' + (m.name || m.email) + ' מבית הכנסת?')) return;
+        await apiJson('DELETE', '/api/members/' + m.id);
+        renderMembers();
+      }));
+    }
+    tr.appendChild(td);
+    tb.appendChild(tr);
+  });
+
+  var area = document.getElementById('inviteArea');
+  area.innerHTML = '';
+  (r.body.invites || []).forEach(function(inv){
+    var box = document.createElement('div');
+    box.className = 'codebox';
+    box.innerHTML = '<span>קוד הזמנה פעיל:</span><code>' + escapeHtml(inv.code) + '</code>';
+    box.appendChild(actBtn('העתקה', 'btn sm', function(){
+      navigator.clipboard.writeText(inv.code).then(function(){ toast('הקוד הועתק'); });
+    }));
+    box.appendChild(actBtn('ביטול', 'btn sm ghost', async function(){
+      await apiJson('DELETE', '/api/members/invite', { code: inv.code });
+      renderMembers();
+    }));
+    area.appendChild(box);
+  });
+}
+
+document.getElementById('btnMembers').addEventListener('click', function(){
+  membersOverlay.classList.add('open');
+  renderMembers();
+});
+document.getElementById('btnMemClose').addEventListener('click', function(){
+  membersOverlay.classList.remove('open');
+});
+document.getElementById('btnInvite').addEventListener('click', async function(){
+  var r = await apiJson('POST', '/api/members/invite');
+  if(!r.ok){ alert(r.body.error || 'הפעולה נכשלה'); return; }
+  renderMembers();
+  toast('נוצר קוד הזמנה — תקף ל-72 שעות');
+});
+
+/* =====================================================================
+   17. ניהול מערכת (מנהל-על)
+   ===================================================================== */
+var adminOverlay = document.getElementById('adminOverlay');
+
+async function renderAdmin(){
+  var sh = await apiJson('GET', '/api/admin/shuls');
+  var tb = document.querySelector('#shulTable tbody');
+  tb.innerHTML = '';
+  (sh.body.shuls || []).forEach(function(x){
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + escapeHtml(x.name) + '</td>' +
+      '<td>' + x.users + '</td>' +
+      '<td>' + (x.taken || 0) + '</td>' +
+      '<td>' + (x.updated_at ? stamp(new Date(x.updated_at)) : '—') + '</td>';
+    var td = document.createElement('td'); td.className = 'acts';
+    if(x.id !== ME.shulId){
+      td.appendChild(actBtn('מחיקה', 'btn sm danger', async function(){
+        if(!confirm('למחוק לצמיתות את "' + x.name + '" על כל המשתמשים והנתונים שלו?')) return;
+        if(!confirm('אישור סופי — הפעולה בלתי הפיכה.')) return;
+        var r = await apiJson('DELETE', '/api/admin/shuls/' + x.id);
+        if(!r.ok) alert(r.body.error || 'הפעולה נכשלה');
+        renderAdmin();
+      }));
+    }
+    tr.appendChild(td);
+    tb.appendChild(tr);
+  });
+
+  var us = await apiJson('GET', '/api/admin/users');
+  var tb2 = document.querySelector('#userTable tbody');
+  tb2.innerHTML = '';
+  (us.body.users || []).forEach(function(u){
+    var tr = document.createElement('tr');
+    var st = u.status === 'blocked' ? '<span class="tag warn">חסום</span>' : '<span class="tag ok">פעיל</span>';
+    if(u.is_super) st += ' <span class="tag">מנהל</span>';
+    tr.innerHTML =
+      '<td>' + escapeHtml(u.name || '—') + '</td>' +
+      '<td dir="ltr" style="text-align:right">' + escapeHtml(u.email) + '</td>' +
+      '<td>' + escapeHtml(u.shul_name) + '</td>' +
+      '<td>' + st + '</td>';
+    var td = document.createElement('td'); td.className = 'acts';
+    td.appendChild(actBtn('סיסמה חדשה', 'btn sm', async function(){
+      var suggested = randomPassword();
+      var pw = prompt('סיסמה חדשה עבור ' + u.email + ':', suggested);
+      if(pw === null) return;
+      pw = pw.trim();
+      if(pw.length < 8){ alert('הסיסמה חייבת להכיל לפחות 8 תווים'); return; }
+      var r = await apiJson('POST', '/api/admin/users/' + u.id, { action:'password', password: pw });
+      if(!r.ok){ alert(r.body.error || 'הפעולה נכשלה'); return; }
+      alert('הסיסמה עודכנה.\nיש למסור למשתמש: ' + pw);
+    }));
+    if(u.id !== ME.id){
+      td.appendChild(actBtn(u.status === 'blocked' ? 'שחרור' : 'חסימה', 'btn sm', async function(){
+        await apiJson('POST', '/api/admin/users/' + u.id,
+          { action:'status', value: u.status === 'blocked' ? 'active' : 'blocked' });
+        renderAdmin();
+      }));
+    }
+    tr.appendChild(td);
+    tb2.appendChild(tr);
+  });
+}
+
+document.getElementById('btnAdmin').addEventListener('click', function(){
+  adminOverlay.classList.add('open');
+  renderAdmin();
+});
+document.getElementById('btnAdmClose').addEventListener('click', function(){
+  adminOverlay.classList.remove('open');
+});
+
+[membersOverlay, adminOverlay, acctOverlay].forEach(function(ov){
+  ov.addEventListener('mousedown', function(e){
+    if(e.target !== ov) return;
+    if(ov === acctOverlay && ME && ME.mustChange) return;
+    ov.classList.remove('open');
+  });
+});
+
+/* =====================================================================
+   18. אתחול
+   ===================================================================== */
 buildHall();
 buildWomen();
-paintAll();
 
-if(!storageOK){
-  document.getElementById('warnBar').classList.add('show');
-  setSaveState(false, 'לא נשמר!');
-}else{
-  setSaveState(true, countTaken() ? 'נשמר' : 'מוכן');
-  pushSnapshot();     /* נקודת התחלה להיסטוריה */
-  offerRecover();     /* עריכה שנקטעה בפעם הקודמת */
-}
+(async function boot(){
+  var res = null;
+  try{ res = await apiJson('GET', '/api/me'); }catch(e){ res = null; }
+
+  /* אין API — הקובץ נפתח מקומית, מ-GitHub Pages, או שאין רשת. מצב אורח בלבד. */
+  var hasApi = !!(res && res.ok && res.body &&
+                  Object.prototype.hasOwnProperty.call(res.body, 'user'));
+  if(!hasApi){
+    apiAvailable = false;
+    document.getElementById('gateTabs').style.display = 'none';
+    document.getElementById('guestRow').style.display = 'none';
+    enterGuest(true);
+    return;
+  }
+  if(res.body.user){
+    await enterCloud(res.body.user);
+  }else{
+    paintAll();
+    showGate('login');
+  }
+})();
 
 })();
 </script>

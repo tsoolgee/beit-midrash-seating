@@ -1,0 +1,26 @@
+name = "beit-midrash-seating"
+main = "src/index.js"
+compatibility_date = "2025-03-10"
+
+# הקובץ הסטטי של האפליקציה. נבנה אוטומטית מ-../index.html
+# (npm run build) — אל תערוך את public/index.html ישירות.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# מסד הנתונים. יש להחליף את database_id במזהה שמתקבל מ:
+#   npx wrangler d1 create beit-midrash-seating
+[[d1_databases]]
+binding = "DB"
+database_name = "beit-midrash-seating"
+database_id = "REPLACE_WITH_YOUR_D1_ID"
+
+[vars]
+# המייל שיקבל הרשאת מנהל-על. אם נשאר ריק — המשתמש הראשון שנרשם הוא המנהל.
+SUPER_ADMIN_EMAIL = ""
+
+# מספר חזרות PBKDF2 לגיבוב סיסמאות.
+# 20000 נבחר כדי להישאר בתוך מגבלת ה-CPU של התוכנית החינמית (10ms לבקשה).
+# בתוכנית בתשלום אפשר להעלות ל-100000 ומעלה — סיסמאות קיימות ימשיכו לעבוד,
+# כי מספר החזרות נשמר בתוך כל גיבוב בנפרד.
+PBKDF2_ITERATIONS = "20000"
