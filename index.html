@@ -446,6 +446,38 @@ table.grid .acts .btn{padding:3px 8px;font-size:12px}
   font-family:Consolas,monospace;
 }
 
+/* כפתור שינוי שם (מצב אורח) */
+.rename{
+  margin-inline-start:7px;border:1px solid var(--line-strong);background:#fff;
+  border-radius:6px;padding:0 6px;font-size:10.5px;font-weight:700;
+  color:var(--ink-soft);line-height:1.6;
+}
+.rename:hover{background:var(--brand-soft);color:var(--brand-dark);border-color:var(--brand)}
+
+/* קרדיט ליוצר — רצועה בצד */
+.credit{
+  position:fixed;inset-inline-end:0;top:50%;transform:translateY(-50%);
+  z-index:30;display:flex;align-items:center;gap:7px;
+  writing-mode:vertical-rl;text-orientation:mixed;
+  background:linear-gradient(180deg,#8a6a35,#6b5127);
+  color:#fdf6e4;text-decoration:none;
+  padding:14px 6px;border-radius:10px 0 0 10px;
+  font-size:11px;font-weight:700;letter-spacing:.6px;
+  box-shadow:-2px 0 10px rgba(60,45,20,.22);
+  opacity:.85;transition:.15s;
+}
+.credit:hover{opacity:1;padding-inline-end:9px}
+.credit b{font-weight:800;letter-spacing:1.2px}
+.credit .sep{width:1px;height:16px;background:rgba(253,246,228,.45);flex:0 0 auto}
+@media (max-width:900px){ .credit{display:none} }
+
+/* קרדיט במסך הכניסה */
+.gate-credit{
+  text-align:center;padding:10px 0 0;font-size:11.5px;color:var(--ink-soft);
+}
+.gate-credit a{color:var(--brand-dark);font-weight:800;text-decoration:none}
+.gate-credit a:hover{text-decoration:underline}
+
 body.readonly .seat:hover{transform:none;box-shadow:none;border-color:inherit}
 body.readonly .seat{cursor:default}
 
@@ -656,6 +688,9 @@ body.readonly .seat{cursor:default}
         <button class="btn ghost sm" type="button" id="btnGuest">המשך כאורח — ללא חשבון</button>
         <div style="margin-top:5px;font-size:11.5px">במצב אורח הנתונים נשמרים במחשב זה בלבד, עם ייצוא וייבוא ידניים.</div>
       </div>
+      <div class="gate-credit">
+        פותח על ידי <a href="https://tsoolgee.uk" target="_blank" rel="noopener noreferrer">צול גאה · TSOOLGEE.UK</a>
+      </div>
     </div>
   </div>
 </div>
@@ -681,8 +716,9 @@ body.readonly .seat{cursor:default}
         <path d="M32 20v22M23 28h18"/>
       </svg>
       <div>
-        <h1>שיבוץ מקומות — בית מדרש תפארת יהודה</h1>
-        <small>ימים נוראים · ניהול מקומות ישיבה</small>
+        <h1>שיבוץ מקומות</h1>
+        <small><span id="brandShul">בית המדרש</span> · ימים נוראים<button
+          class="rename" type="button" id="btnRenameGuest" title="שינוי שם בית המדרש" hidden>שינוי שם</button></small>
       </div>
     </div>
 
@@ -763,7 +799,7 @@ body.readonly .seat{cursor:default}
 
   </div>
 
-  <div class="print-footer" id="printFooter">בית מדרש תפארת יהודה · מפת שיבוץ מקומות</div>
+  <div class="print-footer" id="printFooter">מפת שיבוץ מקומות</div>
 </main>
 
 <div class="legend noprint">
@@ -1036,6 +1072,11 @@ body.readonly .seat{cursor:default}
   </div>
 </div>
 
+<a class="credit noprint" href="https://tsoolgee.uk" target="_blank" rel="noopener noreferrer"
+   title="פותח על ידי צול גאה — TSOOLGEE.UK">
+  <span>פותח ע״י</span><span class="sep"></span><b>צול גאה</b><span class="sep"></span><span>TSOOLGEE.UK</span>
+</a>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1046,7 +1087,8 @@ body.readonly .seat{cursor:default}
    1. הגדרות מבנה — ניתן לעדכן כאן את הצורה המדויקת של האולם
    ===================================================================== */
 var CONFIG = {
-  hallName: 'בית מדרש תפארת יהודה',
+  /* שם בית המדרש אינו קבוע כאן — הוא נקבע בהרשמה (ובמצב אורח נבחר ידנית) */
+  defaultName: 'בית המדרש',
   hall: {
     rows: 4,             // מספר שורות באולם
     rightSeats: 4,       // מקומות בכל שולחן בצד ימין
@@ -1109,6 +1151,20 @@ var serverRev = 0;
 var localDirty = false;
 
 function draftKey(){ return STORAGE_KEY + ':draft:' + (MODE === 'cloud' && ME ? ME.shulId : 'guest'); }
+
+/* שם בית המדרש — מגיע מההרשמה; במצב אורח נבחר ידנית ונשמר מקומית */
+var NAME_KEY = STORAGE_KEY + ':name';
+function shulName(){
+  if(MODE === 'cloud' && ME && ME.shulName) return ME.shulName;
+  try{ return localStorage.getItem(NAME_KEY) || CONFIG.defaultName; }
+  catch(e){ return CONFIG.defaultName; }
+}
+function applyShulName(){
+  var n = shulName();
+  document.title = 'שיבוץ מקומות — ' + n;
+  document.getElementById('brandShul').textContent = n;
+  document.getElementById('btnRenameGuest').hidden = (MODE === 'cloud');
+}
 
 /* בדיקה חד-פעמית שהדפדפן אכן מאפשר שמירה מקומית */
 var storageOK = (function(){
@@ -1624,7 +1680,7 @@ document.getElementById('searchBox').addEventListener('input', function(){
    7. יצוא — כותרות ומיון
    ===================================================================== */
 function exportTitle(evKey){
-  return 'שיבוץ מקומות ' + EVENTS[evKey].name + ' ' + CONFIG.hallName;
+  return 'שיבוץ מקומות ' + EVENTS[evKey].name + ' ' + shulName();
 }
 function scopeName(scope){
   if(scope === 'hall')  return 'בית המדרש';
@@ -1723,7 +1779,8 @@ function doPdf(evKey, scope, withStatus, orient){
   document.getElementById('phTitle').textContent = exportTitle(evKey);
   document.getElementById('phSub').textContent = 'מפת ' + scopeName(scope);
   document.getElementById('printFooter').textContent =
-    CONFIG.hallName + ' · ' + EVENTS[evKey].name + ' · ' + scopeName(scope);
+    shulName() + ' · ' + EVENTS[evKey].name + ' · ' + scopeName(scope) +
+    '     |     הופק במערכת שיבוץ מקומות · TSOOLGEE.UK';
 
   var classes = EVENTS[evKey].cls + ' scope-' + scope +
                 (withStatus ? ' status-on' : '') +
@@ -1798,6 +1855,8 @@ function buildSheet(evKey, scope){
     '<tr><td colspan="3" style="font-size:20px;font-weight:bold;text-align:center;padding:10px">' + esc(title) + '</td></tr>' +
     '<tr><td colspan="3" style="font-size:14px;text-align:center;padding:4px 10px 12px">' + esc(sub) + '</td></tr>' +
     head + rows +
+    '<tr><td colspan="3" style="font-size:11px;text-align:center;padding:10px;color:#8a6a35">' +
+    'הופק במערכת שיבוץ מקומות · צול גאה · TSOOLGEE.UK</td></tr>' +
     '</table></body></html>';
 }
 
@@ -1813,7 +1872,7 @@ function download(filename, content, mime){
 
 function doXls(evKey, scope){
   var html = buildSheet(evKey, scope);
-  var name = 'שיבוץ מקומות ' + EVENTS[evKey].name + ' - ' + scopeName(scope) + '.xls';
+  var name = shulName() + ' - ' + EVENTS[evKey].name + ' - ' + scopeName(scope) + '.xls';
   download(name, html, 'application/vnd.ms-excel');
   closeExport();
   toast('הטבלה הורדה');
@@ -2105,7 +2164,7 @@ var syncTimer = null, syncing = false, syncAgain = false, retryTimer = null;
 function queueSync(){
   setSaveState(true, 'ממתין לשמירה…');
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncNow, 700);
+  syncTimer = setTimeout(syncNow, 1500);
 }
 
 async function syncNow(){
@@ -2170,25 +2229,39 @@ async function loadCloudChart(){
   return false;
 }
 
-/* ---------- בדיקת עדכונים מגבאי אחר ---------- */
+/* ---------- בדיקת עדכונים מגבאי אחר — חסכוני במכסה ----------
+   בקשה אחת בלבד לכל בדיקה (?since מחזיר תשובה זעירה כשאין שינוי),
+   רק כשהלשונית גלויה, רק אם המשתמש פעיל, ומיד בחזרה ללשונית. */
+var POLL_MS = 60000;
+var IDLE_MS = 30 * 60000;
 var pollTimer = null;
+var lastActivity = Date.now();
+
+['click','keydown','pointerdown'].forEach(function(ev){
+  document.addEventListener(ev, function(){ lastActivity = Date.now(); }, { passive: true });
+});
+
+async function pollOnce(){
+  if(MODE !== 'cloud' || document.hidden || syncing || localDirty) return;
+  if(seatOverlay.classList.contains('open')) return;
+  if(Date.now() - lastActivity > IDLE_MS) return;     /* לשונית ננטשה — לא בודקים */
+  try{
+    var r = await apiJson('GET', '/api/chart?since=' + serverRev);
+    if(r.ok && !r.body.unchanged && r.body.data){
+      applyServer(r.body.data, r.body.rev, r.body.updatedBy, r.body.updatedAt);
+      toast('המפה עודכנה' + (r.body.updatedBy ? ' על ידי ' + r.body.updatedBy : ''));
+    }
+  }catch(e){}
+}
+
 function startPolling(){
   clearInterval(pollTimer);
-  pollTimer = setInterval(async function(){
-    if(MODE !== 'cloud' || document.hidden || syncing || localDirty) return;
-    if(seatOverlay.classList.contains('open')) return;
-    try{
-      var r = await apiJson('GET', '/api/chart/rev');
-      if(r.ok && r.body.rev !== serverRev){
-        var full = await apiJson('GET', '/api/chart');
-        if(full.ok){
-          applyServer(full.body.data, full.body.rev, full.body.updatedBy, full.body.updatedAt);
-          toast('המפה עודכנה' + (full.body.updatedBy ? ' על ידי ' + full.body.updatedBy : ''));
-        }
-      }
-    }catch(e){}
-  }, 20000);
+  pollTimer = setInterval(pollOnce, POLL_MS);
 }
+
+document.addEventListener('visibilitychange', function(){
+  if(!document.hidden){ lastActivity = Date.now(); pollOnce(); }
+});
 
 /* ---------- התנגשות עריכה ---------- */
 var conflictOverlay = document.getElementById('conflictOverlay');
@@ -2342,7 +2415,20 @@ function applyRole(){
   var readOnly = !!(ME && !ME.canEdit);
   document.getElementById('btnClearAll').hidden = readOnly;
   document.body.classList.toggle('readonly', readOnly);
+  applyShulName();
 }
+
+/* שינוי שם במצב אורח */
+document.getElementById('btnRenameGuest').addEventListener('click', function(){
+  var cur = shulName();
+  var next = prompt('שם בית המדרש — יופיע בכותרת ובכל הייצואים:', cur);
+  if(next === null) return;
+  next = next.trim();
+  if(!next) return;
+  try{ localStorage.setItem(NAME_KEY, next); }catch(e){}
+  applyShulName();
+  toast('השם עודכן');
+});
 
 async function enterCloud(user){
   ME = user;

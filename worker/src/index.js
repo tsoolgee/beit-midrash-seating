@@ -296,11 +296,22 @@ const SCHEMA = [
      email TEXT PRIMARY KEY, fails INTEGER NOT NULL DEFAULT 0, last_fail TEXT)`,
 ];
 
-let schemaReady = false;
-async function ensureSchema(env) {
-  if (schemaReady) return;
-  await env.DB.batch(SCHEMA.map((sql) => env.DB.prepare(sql)));
-  schemaReady = true;
+/**
+ * הטבלאות נוצרות רק אם הן באמת חסרות — לא בכל עלייה של ה-Worker.
+ * כך אין 12 שאילתות מיותרות בכל התחלה קרה, וזה קורה בפועל פעם אחת בחיי המערכת.
+ */
+function isMissingTable(err) {
+  return /no such table/i.test(String((err && err.message) || err));
+}
+async function runWithSchema(request, env, url, ctx) {
+  const retry = request.clone();     // הגוף נקרא פעם אחת בלבד — שומרים עותק
+  try {
+    return await api(request, env, url, ctx);
+  } catch (err) {
+    if (!isMissingTable(err)) throw err;
+    await env.DB.batch(SCHEMA.map((sql) => env.DB.prepare(sql)));
+    return await api(retry, env, url, ctx);
+  }
 }
 
 /* ============================================================
@@ -321,8 +332,7 @@ export default {
     }
 
     try {
-      await ensureSchema(env);
-      return await api(request, env, url, ctx);
+      return await runWithSchema(request, env, url, ctx);
     } catch (err) {
       console.error('API error', err && err.stack ? err.stack : err);
       return bad('שגיאת שרת פנימית', 500);
@@ -481,6 +491,11 @@ async function api(request, env, url, ctx) {
   /* ---------------- המפה ---------------- */
   if (path === '/api/chart' && method === 'GET') {
     const c = await getChart(env, me.shul_id);
+    // ?since=<rev> — אם אין שינוי מחזירים תשובה זעירה במקום את כל המפה.
+    const since = url.searchParams.get('since');
+    if (since !== null && Number(since) === Number(c.rev)) {
+      return json({ unchanged: true, rev: c.rev });
+    }
     return json({ data: JSON.parse(c.data || '{}'), rev: c.rev, updatedAt: c.updated_at, updatedBy: c.updated_by });
   }
 
