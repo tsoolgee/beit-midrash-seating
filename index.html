@@ -736,6 +736,7 @@ body.readonly .seat{cursor:default}
       <button class="btn primary" id="btnExport" type="button">ייצוא ▾</button>
       <button class="btn" id="btnBackup" type="button" title="גיבוי / שחזור נתונים">גיבוי</button>
       <button class="btn danger sm" id="btnClearAll" type="button">איפוס הכל</button>
+      <button class="btn sm" id="btnSync" type="button" hidden>סנכרון</button>
       <button class="btn sm" id="btnMembers" type="button" hidden>גבאים</button>
       <button class="btn sm" id="btnAdmin" type="button" hidden>ניהול מערכת</button>
     </div>
@@ -1645,6 +1646,7 @@ document.getElementById('btnCancel').addEventListener('click', requestCloseSeat)
 
 /* אזהרה בסגירת החלון/הלשונית כשיש עריכה פתוחה שלא נשמרה */
 window.addEventListener('beforeunload', function(e){
+  if(localDirty) flushOnLeave();
   if(!dirty) return;
   e.preventDefault();
   e.returnValue = '';
@@ -2148,7 +2150,9 @@ async function apiJson(method, path, body){
 function cacheLocal(){
   if(!storageOK || !ME) return;
   try{
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ shulId: ME.shulId, rev: serverRev, data: data }));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      shulId: ME.shulId, rev: serverRev, dirty: !!localDirty, data: data
+    }));
   }catch(e){}
 }
 function readCache(){
@@ -2158,19 +2162,39 @@ function readCache(){
   }catch(e){ return null; }
 }
 
-/* ---------- סנכרון ---------- */
+/* ---------- סנכרון חסכוני ----------
+   אין בדיקות תקופתיות ואין תשדורת ברקע. בקשה נשלחת רק כאשר יש באמת מה לשלוח:
+   אחרי שהעריכה נרגעה, ברגע שעוזבים את הלשונית, או בלחיצה ידנית. */
+var FLUSH_IDLE_MS   = 10000;          /* המתנה אחרי השינוי האחרון */
+var AWAY_REFRESH_MS = 10 * 60000;     /* רק אחרי היעדרות ארוכה בודקים מה השתנה */
 var syncTimer = null, syncing = false, syncAgain = false, retryTimer = null;
+var lastServerCheck = 0;
+var serverMeta = { updatedBy: null, updatedAt: null };
+
+function pendingLabel(){
+  return 'נשמר במחשב · ממתין לענן';
+}
 
 function queueSync(){
-  setSaveState(true, 'ממתין לשמירה…');
+  localDirty = true;
+  setSaveState(true, pendingLabel());
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncNow, 1500);
+  syncTimer = setTimeout(function(){ syncNow(); }, FLUSH_IDLE_MS);
+}
+
+function markSynced(rev){
+  if(rev !== undefined) serverRev = rev;
+  localDirty = false;
+  lastServerCheck = Date.now();
+  cacheLocal();
+  setSaveState(true, 'נשמר בענן ' + stamp());
 }
 
 async function syncNow(){
-  if(MODE !== 'cloud') return;
+  if(MODE !== 'cloud' || !localDirty) return;
   if(syncing){ syncAgain = true; return; }
   syncing = true;
+  clearTimeout(syncTimer);
   clearTimeout(retryTimer);
   setSaveState(true, 'שומר…');
   try{
@@ -2183,24 +2207,35 @@ async function syncNow(){
     if(r.status === 401){
       syncing = false;
       setSaveState(false, 'ההתחברות פגה');
-      alert('ההתחברות פגה. יש להיכנס מחדש.\nהשינויים שערכת שמורים במחשב ויעלו לאחר הכניסה.');
+      alert('ההתחברות פגה. יש להיכנס מחדש. השינויים שערכת שמורים במחשב ויעלו לאחר הכניסה.');
       showGate('login');
       return;
     }
     if(!r.ok){
       setSaveState(false, r.body.error || 'השמירה נכשלה');
     }else{
-      serverRev = r.body.rev;
-      localDirty = false;
-      cacheLocal();
-      setSaveState(true, 'נשמר בענן ' + stamp());
+      serverMeta = { updatedBy: r.body.updatedBy, updatedAt: r.body.updatedAt };
+      markSynced(r.body.rev);
     }
   }catch(e){
     setSaveState(false, 'אין חיבור — נשמר במחשב');
-    retryTimer = setTimeout(syncNow, 15000);
+    retryTimer = setTimeout(function(){ syncNow(); }, 30000);
   }
   syncing = false;
   if(syncAgain){ syncAgain = false; queueSync(); }
+}
+
+/* שליחה אחרונה ברגע שעוזבים את העמוד — נשלחת גם אחרי שהלשונית נסגרת */
+function flushOnLeave(){
+  if(MODE !== 'cloud' || !localDirty || syncing) return;
+  var payload = JSON.stringify({ data: data, rev: serverRev });
+  if(payload.length > 60000) return;      /* מעל המגבלה של keepalive — יעלה בפתיחה הבאה */
+  try{
+    fetch('/api/chart', {
+      method: 'PUT', credentials: 'same-origin', keepalive: true,
+      headers: { 'content-type': 'application/json' }, body: payload
+    });
+  }catch(e){}
 }
 
 /* ---------- קליטת גרסה מהשרת ---------- */
@@ -2208,11 +2243,14 @@ function applyServer(obj, rev, by, at){
   data = obj || {};
   serverRev = rev || 0;
   localDirty = false;
+  lastServerCheck = Date.now();
+  serverMeta = { updatedBy: by || null, updatedAt: at || null };
   cacheLocal();
   paintAll();
   setSaveState(true, 'נשמר בענן' + (at ? ' ' + stamp(new Date(at)) : ''));
 }
 
+/* טעינת המפה מהשרת — נתיב גיבוי בלבד (הטעינה הרגילה מגיעה מ-/api/boot) */
 async function loadCloudChart(){
   try{
     var r = await apiJson('GET', '/api/chart');
@@ -2223,45 +2261,68 @@ async function loadCloudChart(){
   }catch(e){}
   var c = readCache();
   if(c){
-    data = c.data || {}; serverRev = c.rev || 0; paintAll();
+    data = c.data || {}; serverRev = c.rev || 0; localDirty = !!c.dirty; paintAll();
     setSaveState(false, 'לא מסונכרן — עותק מקומי');
   }
   return false;
 }
 
-/* ---------- בדיקת עדכונים מגבאי אחר — חסכוני במכסה ----------
-   בקשה אחת בלבד לכל בדיקה (?since מחזיר תשובה זעירה כשאין שינוי),
-   רק כשהלשונית גלויה, רק אם המשתמש פעיל, ומיד בחזרה ללשונית. */
-var POLL_MS = 60000;
-var IDLE_MS = 30 * 60000;
-var pollTimer = null;
-var lastActivity = Date.now();
-
-['click','keydown','pointerdown'].forEach(function(ev){
-  document.addEventListener(ev, function(){ lastActivity = Date.now(); }, { passive: true });
-});
-
-async function pollOnce(){
-  if(MODE !== 'cloud' || document.hidden || syncing || localDirty) return;
-  if(seatOverlay.classList.contains('open')) return;
-  if(Date.now() - lastActivity > IDLE_MS) return;     /* לשונית ננטשה — לא בודקים */
+/* ---------- בדיקה יזומה מול השרת (לא תקופתית) ---------- */
+async function pollOnce(silent){
+  if(MODE !== 'cloud' || syncing || localDirty) return;
   try{
     var r = await apiJson('GET', '/api/chart?since=' + serverRev);
-    if(r.ok && !r.body.unchanged && r.body.data){
+    if(!r.ok) return;
+    lastServerCheck = Date.now();
+    if(!r.body.unchanged && r.body.data){
       applyServer(r.body.data, r.body.rev, r.body.updatedBy, r.body.updatedAt);
       toast('המפה עודכנה' + (r.body.updatedBy ? ' על ידי ' + r.body.updatedBy : ''));
+    }else if(!silent){
+      toast('המפה מעודכנת');
     }
   }catch(e){}
 }
 
-function startPolling(){
-  clearInterval(pollTimer);
-  pollTimer = setInterval(pollOnce, POLL_MS);
-}
-
+/* יציאה מהלשונית — שולחים מה שממתין. חזרה אליה — מעלים מה שממתין,
+   ורק אחרי היעדרות ארוכה בודקים אם מישהו אחר שינה. */
 document.addEventListener('visibilitychange', function(){
-  if(!document.hidden){ lastActivity = Date.now(); pollOnce(); }
+  if(MODE !== 'cloud') return;
+  if(document.hidden){
+    flushOnLeave();
+    return;
+  }
+  lastActivity = Date.now();
+  if(localDirty){ clearTimeout(syncTimer); syncNow(); }
+  else if(Date.now() - lastServerCheck > AWAY_REFRESH_MS){ pollOnce(true); }
 });
+window.addEventListener('pagehide', flushOnLeave);
+
+/* כפתור סנכרון ידני */
+document.getElementById('btnSync').addEventListener('click', async function(){
+  if(MODE !== 'cloud') return;
+  if(localDirty){ clearTimeout(syncTimer); await syncNow(); }
+  else { await pollOnce(false); }
+});
+
+/* התאמת המצב שנשמר במטמון בפתיחה — אם משהו לא הספיק לעלות */
+async function reconcileCache(){
+  var c = readCache();
+  if(!c || !c.dirty) return;
+  if(JSON.stringify(c.data) === JSON.stringify(data)){
+    markSynced();                       /* השליחה האחרונה כן הספיקה */
+    return;
+  }
+  if(Number(c.rev) === Number(serverRev)){
+    data = c.data; paintAll();          /* אף אחד לא נגע — פשוט מעלים */
+    localDirty = true;
+    toast('הועלו שינויים שנשארו מהפעם הקודמת');
+    await syncNow();
+    return;
+  }
+  var server = { data: data, rev: serverRev, updatedBy: serverMeta.updatedBy, updatedAt: serverMeta.updatedAt };
+  data = c.data; paintAll(); localDirty = true;
+  showConflict(server);                 /* גם השרת התקדם וגם יש שינוי מקומי */
+}
 
 /* ---------- התנגשות עריכה ---------- */
 var conflictOverlay = document.getElementById('conflictOverlay');
@@ -2348,7 +2409,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
   btn.disabled = false;
   if(!r.ok){ setGateMsg(r.body.error || 'הכניסה נכשלה'); return; }
   document.getElementById('lgPass').value = '';
-  await enterCloud(r.body.user);
+  await enterCloud(r.body.user, r.body.chart);
 });
 
 document.getElementById('registerForm').addEventListener('submit', async function(e){
@@ -2383,7 +2444,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
   var guestCount = 0;
   for(var k in guest){ if(guest[k] && (guest[k].first || guest[k].last)) guestCount++; }
 
-  await enterCloud(r.body.user);
+  await enterCloud(r.body.user, r.body.chart);
 
   if(guestCount && kind === 'new'){
     if(confirm('נמצאו ' + guestCount + ' מקומות משובצים ממצב אורח.\nלהעלות אותם לחשבון החדש?')){
@@ -2404,6 +2465,7 @@ document.getElementById('btnGuestSignup').addEventListener('click', function(){ 
    ===================================================================== */
 function applyRole(){
   var owner = ME && (ME.role === 'owner' || ME.isSuper);
+  document.getElementById('btnSync').hidden    = (MODE !== 'cloud');
   document.getElementById('btnMembers').hidden = !owner;
   document.getElementById('btnAdmin').hidden   = !(ME && ME.isSuper);
   document.getElementById('acctBox').hidden    = !ME;
@@ -2430,13 +2492,17 @@ document.getElementById('btnRenameGuest').addEventListener('click', function(){
   toast('השם עודכן');
 });
 
-async function enterCloud(user){
+async function enterCloud(user, chart){
   ME = user;
   MODE = 'cloud';
   hideGate();
   applyRole();
-  await loadCloudChart();
-  startPolling();
+  if(chart){
+    applyServer(chart.data, chart.rev, chart.updatedBy, chart.updatedAt);
+  }else{
+    await loadCloudChart();
+  }
+  await reconcileCache();
   offerRecover();
   if(user.mustChange){
     openAccount(true);
@@ -2463,9 +2529,12 @@ function enterGuest(noApi){
 }
 
 document.getElementById('btnLogout').addEventListener('click', async function(){
-  if(localDirty && !confirm('יש שינויים שטרם עלו לשרת. לצאת בכל זאת?')) return;
+  if(localDirty){
+    clearTimeout(syncTimer);
+    await syncNow();
+    if(localDirty && !confirm('יש שינויים שטרם עלו לשרת. לצאת בכל זאת?')) return;
+  }
   try{ await apiFetch('POST', '/api/logout'); }catch(e){}
-  clearInterval(pollTimer);
   ME = null; MODE = 'guest'; data = {}; serverRev = 0; localDirty = false;
   paintAll(); applyRole();
   showGate('login');
@@ -2721,7 +2790,7 @@ buildWomen();
 
 (async function boot(){
   var res = null;
-  try{ res = await apiJson('GET', '/api/me'); }catch(e){ res = null; }
+  try{ res = await apiJson('GET', '/api/boot'); }catch(e){ res = null; }
 
   /* אין API — הקובץ נפתח מקומית, מ-GitHub Pages, או שאין רשת. מצב אורח בלבד. */
   var hasApi = !!(res && res.ok && res.body &&
@@ -2734,7 +2803,7 @@ buildWomen();
     return;
   }
   if(res.body.user){
-    await enterCloud(res.body.user);
+    await enterCloud(res.body.user, res.body.chart);
   }else{
     paintAll();
     showGate('login');

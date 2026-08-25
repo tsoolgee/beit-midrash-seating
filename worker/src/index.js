@@ -222,6 +222,15 @@ async function getChart(env, shulId) {
   return { shul_id: shulId, data: EMPTY_CHART, rev: 0, updated_at: nowISO(), updated_by: null };
 }
 
+function chartPayload(c) {
+  return {
+    data: JSON.parse(c.data || '{}'),
+    rev: c.rev,
+    updatedAt: c.updated_at,
+    updatedBy: c.updated_by,
+  };
+}
+
 function countTaken(dataStr) {
   try {
     const o = JSON.parse(dataStr);
@@ -410,7 +419,8 @@ async function api(request, env, url, ctx) {
     const u = await env.DB.prepare(
       `SELECT u.*, sh.name AS shul_name FROM users u JOIN shuls sh ON sh.id = u.shul_id WHERE u.id = ?`)
       .bind(id).first();
-    return json({ user: publicUser(u) }, 200,
+    const c0 = await getChart(env, shulId);
+    return json({ user: publicUser(u), chart: chartPayload(c0) }, 200,
       { 'set-cookie': sessionCookie(token, SESSION_DAYS * 86400) });
   }
 
@@ -437,7 +447,8 @@ async function api(request, env, url, ctx) {
     await clearFails(env, email);
     await env.DB.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').bind(nowISO(), u.id).run();
     const token = await createSession(env, u.id);
-    return json({ user: publicUser(u) }, 200,
+    const c0 = await getChart(env, u.shul_id);
+    return json({ user: publicUser(u), chart: chartPayload(c0) }, 200,
       { 'set-cookie': sessionCookie(token, SESSION_DAYS * 86400) });
   }
 
@@ -456,6 +467,13 @@ async function api(request, env, url, ctx) {
   if (path === '/api/me') {
     if (!me) return json({ user: null });
     return json({ user: publicUser(me) });
+  }
+
+  // טעינה ראשונית בבקשה אחת: מי אני + המפה. חוסך בקשה בכל פתיחת דף.
+  if (path === '/api/boot' && method === 'GET') {
+    if (!me) return json({ user: null });
+    const c = await getChart(env, me.shul_id);
+    return json({ user: publicUser(me), chart: chartPayload(c) });
   }
 
   if (!me) return bad('נדרשת התחברות', 401);
